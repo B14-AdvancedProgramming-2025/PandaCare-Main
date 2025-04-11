@@ -13,6 +13,11 @@ class DummyWalletStrategy implements WalletStrategy {
     public void execute() {
         executed = true;
     }
+
+    @Override
+    public Wallet transfer(TransactionRequest transactionRequest) {
+        return null;
+    }
 }
 
 public class WalletTest {
