@@ -34,36 +34,42 @@ jobs:
       - name: Build Docker image
         run: docker build -t pandacare:latest .
 
-      - name: Save Docker image
+      - name: Save Docker image to tar
         run: docker save pandacare:latest > pandacare.tar
 
-      - name: Deploy to AWS EC2
-        env:
-          AWS_HOST: ${{ secrets.AWS_HOST }}
-          AWS_SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-          AWS_USERNAME: ${{ secrets.AWS_USERNAME }}
-        run: |
-          echo "$AWS_SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+      - name: Compress Docker image
+        run: gzip -f pandacare.tar
 
-          # Copy Docker image to EC2
-          scp -o StrictHostKeyChecking=no -i private_key.pem pandacare.tar $AWS_USERNAME@$AWS_HOST:/home/$AWS_USERNAME/
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          source: 'pandacare.tar.gz'
+          target: '/home/${{ secrets.AWS_USERNAME }}'
+          timeout: 120s
 
-          # SSH into EC2, load image, and start the container
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $AWS_USERNAME@$AWS_HOST << 'EOF'
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          timeout: 120s
+          script: |
+            # Decompress the Docker image
+            gunzip -f /home/${{ secrets.AWS_USERNAME }}/pandacare.tar.gz
+
             # Load Docker image
-            docker load < /home/$AWS_USERNAME/pandacare.tar
-            
-            # Stop existing container if running
-            docker stop pandacare-container || true
-            docker rm pandacare-container || true
-            
-            # Run new container
-            docker run -d --name pandacare-container --restart unless-stopped -p 8080:8080 pandacare:latest
-            
-            # Clean up
-            rm /home/$AWS_USERNAME/pandacare.tar
-          EOF
+            sudo docker load < /home/${{ secrets.AWS_USERNAME }}/pandacare.tar
 
-          # Clean up local private key
-          rm private_key.pem
+            # Stop existing container if running
+            sudo docker stop pandacare-container || true
+            sudo docker rm pandacare-container || true
+
+            # Run new container
+            sudo docker run -d --name pandacare-container --restart unless-stopped -p 8080:8080 pandacare:latest
+
+            # Clean up
+            rm /home/${{ secrets.AWS_USERNAME }}/pandacare.tar
