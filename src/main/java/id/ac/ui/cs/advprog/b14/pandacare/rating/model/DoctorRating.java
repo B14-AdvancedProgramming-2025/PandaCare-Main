@@ -20,3 +20,4 @@ public class DoctorRating {
     public void setComment(String comment) { this.comment = comment; }
 }
 
+
