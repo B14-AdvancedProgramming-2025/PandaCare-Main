@@ -12,11 +12,16 @@ public class ChatMediatorImpl implements ChatMediator {
     
     @Override
     public void sendMessage(String message, ChatUser sender) {
-        // Will be implemented later
+        for (ChatUser user : users) {
+            // Don't send message back to the sender
+            if (user != sender) {
+                user.receive(message);
+            }
+        }
     }
     
     @Override
     public void addUser(ChatUser user) {
-        // Will be implemented later
+        users.add(user);
     }
 } 

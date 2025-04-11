@@ -8,11 +8,12 @@ public class Patient extends ChatUser {
     
     @Override
     public void send(String message) {
-        // Will be implemented later
+        System.out.println(this.name + " (Patient): Sending Message: " + message);
+        mediator.sendMessage(message, this);
     }
     
     @Override
     public void receive(String message) {
-        // Will be implemented later
+        System.out.println(this.name + " (Patient): Received Message: " + message);
     }
 } 
