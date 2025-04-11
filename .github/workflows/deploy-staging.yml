@@ -1,0 +1,66 @@
+name: Deploy to AWS Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        
+      - name: Build with Gradle
+        run: ./gradlew build
+        
+      - name: Run tests
+        run: ./gradlew test
+        
+      - name: Build Docker image
+        run: docker build -t pandacare:latest .
+        
+      - name: Save Docker image
+        run: docker save pandacare:latest > pandacare.tar
+        
+      - name: Deploy to AWS EC2
+        env:
+          AWS_HOST: ${{ secrets.AWS_HOST }}
+          AWS_SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          AWS_USERNAME: ${{ secrets.AWS_USERNAME }}
+        run: |
+          echo "$AWS_SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          
+          # Copy Docker image to EC2
+          scp -o StrictHostKeyChecking=no -i private_key.pem pandacare.tar $AWS_USERNAME@$AWS_HOST:/home/$AWS_USERNAME/
+          
+          # SSH into EC2, load image, and start the container
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $AWS_USERNAME@$AWS_HOST << 'EOF'
+            # Load Docker image
+            docker load < /home/$AWS_USERNAME/pandacare.tar
+            
+            # Stop existing container if running
+            docker stop pandacare-container || true
+            docker rm pandacare-container || true
+            
+            # Run new container
+            docker run -d --name pandacare-container --restart unless-stopped -p 8080:8080 pandacare:latest
+            
+            # Clean up
+            rm /home/$AWS_USERNAME/pandacare.tar
+          EOF
+          
+          # Clean up local private key
+          rm private_key.pem 
