@@ -27,7 +27,18 @@ public class ChatController {
             @RequestParam("pacilianId") String pacilianId,
             @RequestParam("caregiverId") String caregiverId,
             Model model) {
-        // TODO: Implement getting a chat room page
+        // Get or create a chat room for these users
+        ChatRoom room = chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
+        
+        // Get all messages for this room
+        List<ChatMessage> messages = chatService.getMessagesByRoomId(room.getRoomId());
+        
+        // Add data to the model
+        model.addAttribute("room", room);
+        model.addAttribute("messages", messages);
+        model.addAttribute("pacilianId", pacilianId);
+        model.addAttribute("caregiverId", caregiverId);
+        
         return "chat/room";
     }
     
@@ -37,8 +48,11 @@ public class ChatController {
             @RequestParam("senderId") String senderId,
             @RequestParam("recipientId") String recipientId,
             @RequestParam("content") String content) {
-        // TODO: Implement sending a message
-        return "redirect:/chat/room";
+        // Send the message
+        chatService.sendMessage(roomId, senderId, recipientId, content);
+        
+        // Redirect back to the chat room
+        return "redirect:/chat/room?pacilianId=" + senderId + "&caregiverId=" + recipientId;
     }
     
     @GetMapping("/list")
@@ -46,7 +60,22 @@ public class ChatController {
             @RequestParam("userId") String userId,
             @RequestParam("userType") String userType,
             Model model) {
-        // TODO: Implement getting a list of chat rooms
+        List<ChatRoom> chatRooms;
+        
+        // Get chat rooms based on user type
+        if ("PACILIAN".equals(userType)) {
+            chatRooms = chatService.getChatRoomsByPacilianId(userId);
+        } else if ("CAREGIVER".equals(userType)) {
+            chatRooms = chatService.getChatRoomsByCaregiverId(userId);
+        } else {
+            chatRooms = List.of(); // Empty list for unknown user types
+        }
+        
+        // Add data to the model
+        model.addAttribute("chatRooms", chatRooms);
+        model.addAttribute("userId", userId);
+        model.addAttribute("userType", userType);
+        
         return "chat/list";
     }
 } 

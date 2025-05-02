@@ -22,8 +22,16 @@ public class WebSocketController {
     @MessageMapping("/chat/{roomId}")
     @SendTo("/topic/messages/{roomId}")
     public ChatMessage sendMessage(@DestinationVariable String roomId, ChatMessage message) {
-        // TODO: Implement sending a message through WebSocket
-        return null;
+        // Add timestamp if not present
+        if (message.getTimestamp() == null) {
+            message.setTimestamp(LocalDateTime.now());
+        }
+        
+        // Save the message
+        chatService.sendMessage(roomId, message.getSender(), message.getRecipient(), message.getContent());
+        
+        // Return the message to be broadcast to all subscribers
+        return message;
     }
     
     @MessageMapping("/chat/create/{pacilianId}/{caregiverId}")
@@ -31,7 +39,7 @@ public class WebSocketController {
     public ChatRoom createNewChatRoom(
             @DestinationVariable String pacilianId,
             @DestinationVariable String caregiverId) {
-        // TODO: Implement creating a new chat room through WebSocket
-        return null;
+        // Get or create a chat room
+        return chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
     }
 } 
