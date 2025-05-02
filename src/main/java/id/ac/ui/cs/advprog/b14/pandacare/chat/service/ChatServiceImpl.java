@@ -23,30 +23,60 @@ public class ChatServiceImpl implements ChatService {
     
     @Override
     public void sendMessage(String roomId, String senderId, String recipientId, String content) {
-        // TODO: Implement sending a message
+        ChatRoom room;
+        
+        if (roomId != null) {
+            room = roomRepository.findById(roomId);
+        } else {
+            room = roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId);
+            if (room == null) {
+                // If room doesn't exist, try with reversed roles
+                room = roomRepository.findByPacilianIdAndCaregiverId(recipientId, senderId);
+            }
+            
+            if (room == null) {
+                // Create a new room if it doesn't exist
+                String newRoomId = UUID.randomUUID().toString();
+                
+                // Determine who is pacilian and who is caregiver based on some logic
+                // For now, we'll assume the sender is the pacilian
+                room = new ChatRoom(newRoomId, senderId, recipientId);
+                roomRepository.save(room);
+            }
+            
+            roomId = room.getRoomId();
+        }
+        
+        ChatMessage message = new ChatMessage(senderId, recipientId, content, LocalDateTime.now());
+        messageRepository.save(roomId, message);
     }
     
     @Override
     public List<ChatMessage> getMessagesByRoomId(String roomId) {
-        // TODO: Implement getting messages by room ID
-        return null;
+        return messageRepository.findByRoomId(roomId);
     }
     
     @Override
     public ChatRoom getChatRoomByPacilianAndCaregiver(String pacilianId, String caregiverId) {
-        // TODO: Implement getting a chat room by pacilian and caregiver IDs
-        return null;
+        ChatRoom room = roomRepository.findByPacilianIdAndCaregiverId(pacilianId, caregiverId);
+        
+        if (room == null) {
+            // Create a new room if it doesn't exist
+            String roomId = UUID.randomUUID().toString();
+            room = new ChatRoom(roomId, pacilianId, caregiverId);
+            roomRepository.save(room);
+        }
+        
+        return room;
     }
     
     @Override
     public List<ChatRoom> getChatRoomsByPacilianId(String pacilianId) {
-        // TODO: Implement getting chat rooms by pacilian ID
-        return null;
+        return roomRepository.findByPacilianId(pacilianId);
     }
     
     @Override
     public List<ChatRoom> getChatRoomsByCaregiverId(String caregiverId) {
-        // TODO: Implement getting chat rooms by caregiver ID
-        return null;
+        return roomRepository.findByCaregiverId(caregiverId);
     }
 } 
