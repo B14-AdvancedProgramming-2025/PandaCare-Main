@@ -27,6 +27,10 @@ public abstract class User {
     @NotBlank(message = "Name cannot be empty")
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserType type;
+
     @Column(nullable = false, unique = true)
     @NotBlank(message = "NIK cannot be empty")
     private String nik;
