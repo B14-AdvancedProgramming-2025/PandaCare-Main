@@ -35,4 +35,8 @@ public class AccountServiceImpl implements AccountService {
         }
         accountDatabase.remove(id);
     }
+
+    static void insertTestAccount(Account account) {
+        accountDatabase.put(account.getId().toString(), account);
+    }
 }
