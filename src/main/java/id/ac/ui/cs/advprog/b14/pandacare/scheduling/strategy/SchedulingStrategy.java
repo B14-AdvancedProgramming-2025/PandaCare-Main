@@ -1,8 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy;
 
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Appointment;
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.AppointmentRequest;
+import java.util.List;
 
 public interface SchedulingStrategy {
-    Appointment schedule(AppointmentRequest request);
+    boolean isScheduleAvailable(String proposedSchedule, List<String> existingSchedules);
 }
