@@ -1,17 +1,20 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.model;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
+
 public class DoctorRating {
-    private Doctor doctor;
-    private User user;
+    private Caregiver caregiver; // yang diberi rating
+    private Pacilian pacilian;   // yang memberi rating
     private int value;
     private String comment;
 
     // Getters & Setters
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+    public Caregiver getCaregiver() { return caregiver; }
+    public void setCaregiver(Caregiver caregiver) { this.caregiver = caregiver; }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public Pacilian getPacilian() { return pacilian; }
+    public void setPacilian(Pacilian pacilian) { this.pacilian = pacilian; }
 
     public int getValue() { return value; }
     public void setValue(int value) { this.value = value; }
@@ -19,5 +22,3 @@ public class DoctorRating {
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
 }
-
-
