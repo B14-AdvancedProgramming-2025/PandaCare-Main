@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ConsultationJpaRepository extends JpaRepository<Consultation, String> {
     
-    Consultation findByCaregiver_IdAndPacilian_IdAndScheduleTime(
+    Consultation findByCaregiverIdAndPacilianIdAndScheduleTime(
             String caregiverId, String pacilianId, String scheduleTime);
 }

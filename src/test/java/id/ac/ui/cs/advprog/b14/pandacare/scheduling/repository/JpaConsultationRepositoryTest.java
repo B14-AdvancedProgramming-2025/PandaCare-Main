@@ -37,7 +37,7 @@ public class JpaConsultationRepositoryTest {
     
     @Test
     public void testUpdateStatus() {
-        when(jpaRepository.findByCaregiver_IdAndPacilian_IdAndScheduleTime(
+        when(jpaRepository.findByCaregiverIdAndPacilianIdAndScheduleTime(
                 "C001", "P001", "Monday 10:00-12:00")
         ).thenReturn(new Consultation("CONS1", "C001", "P001", "Monday 10:00-12:00", "BOOKED"));
         
@@ -48,7 +48,7 @@ public class JpaConsultationRepositoryTest {
         boolean result = repository.updateStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED");
         
         assertTrue(result);
-        verify(jpaRepository).findByCaregiver_IdAndPacilian_IdAndScheduleTime(
+        verify(jpaRepository).findByCaregiverIdAndPacilianIdAndScheduleTime(
                 "C001", "P001", "Monday 10:00-12:00");
         verify(jpaRepository).save(any(Consultation.class));
     }

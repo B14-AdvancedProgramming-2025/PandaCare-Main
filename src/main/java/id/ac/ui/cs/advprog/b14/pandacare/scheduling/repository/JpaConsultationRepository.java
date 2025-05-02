@@ -33,7 +33,7 @@ public class JpaConsultationRepository implements ConsultationRepository {
     @Override
     public boolean updateStatus(String caregiverId, String pacilianId, String schedule, String status) {
         try {
-            Consultation consultation = jpaRepository.findByCaregiver_IdAndPacilian_IdAndScheduleTime(
+            Consultation consultation = jpaRepository.findByCaregiverIdAndPacilianIdAndScheduleTime(
                     caregiverId, pacilianId, schedule);
             
             if (consultation == null) {
