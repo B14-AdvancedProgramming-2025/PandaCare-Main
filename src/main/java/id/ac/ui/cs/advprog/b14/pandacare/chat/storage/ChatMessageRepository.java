@@ -13,11 +13,11 @@ public class ChatMessageRepository {
     private final Map<String, List<ChatMessage>> messagesByRoomId = new HashMap<>();
     
     public void save(String roomId, ChatMessage message) {
-        // TODO: Implement saving a message to a room
+        List<ChatMessage> messages = messagesByRoomId.computeIfAbsent(roomId, k -> new ArrayList<>());
+        messages.add(message);
     }
     
     public List<ChatMessage> findByRoomId(String roomId) {
-        // TODO: Implement finding messages by room ID
-        return new ArrayList<>();
+        return messagesByRoomId.getOrDefault(roomId, new ArrayList<>());
     }
 } 

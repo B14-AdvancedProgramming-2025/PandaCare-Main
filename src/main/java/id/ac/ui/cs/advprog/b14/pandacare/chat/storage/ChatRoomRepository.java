@@ -14,32 +14,34 @@ public class ChatRoomRepository {
     private final Map<String, ChatRoom> rooms = new HashMap<>();
     
     public ChatRoom save(ChatRoom room) {
-        // TODO: Implement saving a chat room
+        rooms.put(room.getRoomId(), room);
         return room;
     }
     
     public ChatRoom findById(String roomId) {
-        // TODO: Implement finding a room by ID
-        return null;
+        return rooms.get(roomId);
     }
     
     public List<ChatRoom> findByPacilianId(String pacilianId) {
-        // TODO: Implement finding rooms by pacilian ID
-        return new ArrayList<>();
+        return rooms.values().stream()
+                .filter(room -> room.getPacilianId().equals(pacilianId))
+                .collect(Collectors.toList());
     }
     
     public List<ChatRoom> findByCaregiverId(String caregiverId) {
-        // TODO: Implement finding rooms by caregiver ID
-        return new ArrayList<>();
+        return rooms.values().stream()
+                .filter(room -> room.getCaregiverId().equals(caregiverId))
+                .collect(Collectors.toList());
     }
     
     public ChatRoom findByPacilianIdAndCaregiverId(String pacilianId, String caregiverId) {
-        // TODO: Implement finding a room by pacilian and caregiver IDs
-        return null;
+        return rooms.values().stream()
+                .filter(room -> room.getPacilianId().equals(pacilianId) && room.getCaregiverId().equals(caregiverId))
+                .findFirst()
+                .orElse(null);
     }
     
     public List<ChatRoom> findAll() {
-        // TODO: Implement finding all rooms
-        return new ArrayList<>();
+        return new ArrayList<>(rooms.values());
     }
 } 
