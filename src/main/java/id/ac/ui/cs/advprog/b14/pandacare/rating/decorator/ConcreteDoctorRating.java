@@ -10,9 +10,11 @@ public class ConcreteDoctorRating extends DoctorRatingDecorator {
 
     @Override
     public void setValue(int value) {
+        decoratedRating.setValue(value);
     }
 
     @Override
     public void setComment(String comment) {
+        decoratedRating.setComment(comment);
     }
 }
