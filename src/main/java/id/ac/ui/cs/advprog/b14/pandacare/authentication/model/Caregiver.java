@@ -10,6 +10,9 @@ import java.util.List;
 @Table(name= "caregivers")
 @Getter @Setter
 public class Caregiver extends User {
+    @Column(nullable = false)
+    private String specialty;
+
     @ElementCollection
     @CollectionTable(name = "caregiver_working_schedule", joinColumns = @JoinColumn(name = "caregiver_id"))
     @Column(name = "working_schedule")
@@ -17,8 +20,9 @@ public class Caregiver extends User {
 
     protected Caregiver() {}
 
-    public Caregiver(String email, String password, String name, String nik, String address, String phone, List<String> workingSchedule) {
+    public Caregiver(String email, String password, String name, String nik, String address, String phone, String specialty, List<String> workingSchedule) {
         super(email, password, name, nik, address, phone);
+        this.specialty = specialty;
         this.workingSchedule = workingSchedule;
     }
 }
