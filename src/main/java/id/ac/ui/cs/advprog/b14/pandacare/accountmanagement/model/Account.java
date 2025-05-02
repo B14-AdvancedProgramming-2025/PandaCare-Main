@@ -1,16 +1,22 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Account {
 
+    // Common fields (User base class)
     private UUID id;
     private String email;
     private String password;
@@ -18,37 +24,14 @@ public class Account {
     private String nik;
     private String address;
     private String phoneNumber;
-    private String medicalHistory;
-    private String speciality;
-    private String workingSchedules;
 
-    public Account(String email, String password, String name, String nik, String address,
-                   String phoneNumber, String medicalHistory, String speciality, String workingSchedules) {
-        if (email == null || !email.contains("@")) {
-            throw new IllegalArgumentException("Invalid email format");
-        }
-        if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("Password cannot be empty");
-        }
+    // UserType: "PACILIAN" or "CAREGIVER"
+    private String userType;
 
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.nik = nik;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.medicalHistory = medicalHistory;
-        this.speciality = speciality;
-        this.workingSchedules = workingSchedules;
-        this.id = UUID.randomUUID();
-    }
+    // Only for Pacilian
+    private List<String> medicalHistory;
 
-    @Override
-    public String toString() {
-        return "Account{" +
-                "id=" + id +
-                ", email='" + email + '\'' +
-                ", name='" + name + '\'' +
-                '}';
-    }
+    // Only for Caregiver
+    private String specialty;
+    private List<String> workingSchedules;
 }
