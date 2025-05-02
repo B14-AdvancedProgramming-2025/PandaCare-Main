@@ -22,6 +22,11 @@ public class ChatController {
         this.chatService = chatService;
     }
     
+    @GetMapping("")
+    public String getIndex() {
+        return "chat/index";
+    }
+    
     @GetMapping("/room")
     public String getChatRoomPage(
             @RequestParam("pacilianId") String pacilianId,
