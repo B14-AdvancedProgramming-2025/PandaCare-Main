@@ -15,7 +15,7 @@ public class DoctorRatingService {
         this.doctorRatingRepository = doctorRatingRepository;
     }
 
-
     public void saveRating(DoctorRating doctorRating) {
+        doctorRatingRepository.save(doctorRating);
     }
 }
