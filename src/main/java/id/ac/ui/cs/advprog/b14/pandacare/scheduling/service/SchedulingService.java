@@ -15,22 +15,22 @@ public class SchedulingService {
     }
     
     public boolean createSchedule(String caregiverId, String schedule) {
-        return false;
+        return context.createSchedule(caregiverId, schedule);
     }
     
     public boolean bookConsultation(String caregiverId, String pacilianId, String schedule) {
-        return false;
+        return context.bookConsultation(caregiverId, pacilianId, schedule);
     }
     
     public boolean acceptConsultation(String caregiverId, String pacilianId, String schedule) {
-        return false;
+        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "ACCEPTED");
     }
     
     public boolean rejectConsultation(String caregiverId, String pacilianId, String schedule) {
-        return false;
+        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "REJECTED");
     }
     
     public boolean modifyConsultation(String caregiverId, String pacilianId, String schedule) {
-        return false;
+        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "MODIFIED");
     }
 }
