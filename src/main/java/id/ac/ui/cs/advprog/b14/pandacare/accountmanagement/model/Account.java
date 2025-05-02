@@ -16,7 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Account {
 
-    // Common fields (User base class)
     private UUID id;
     private String email;
     private String password;

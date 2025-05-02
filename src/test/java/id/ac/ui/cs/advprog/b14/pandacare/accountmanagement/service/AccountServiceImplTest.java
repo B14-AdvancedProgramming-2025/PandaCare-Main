@@ -26,7 +26,6 @@ public class AccountServiceImplTest {
                 .phoneNumber("08123456789")
                 .build();
 
-        // Masukkan akun menggunakan helper method
         AccountServiceImpl.insertTestAccount(testAccount);
     }
 
