@@ -1,7 +1,11 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.service;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.SchedulingContext;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.DefaultSchedulingStrategy;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,5 +36,17 @@ public class SchedulingService {
     
     public boolean modifyConsultation(String caregiverId, String pacilianId, String schedule) {
         return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "MODIFIED");
+    }
+
+    public List<String> getCaregiverSchedules(String caregiverId) {
+        return context.getCaregiverSchedules(caregiverId);
+    }
+
+    public List<Consultation> getCaregiverConsultations(String caregiverId) {
+        return context.getCaregiverConsultations(caregiverId);
+    }
+
+    public List<Consultation> getPatientConsultations(String pacilianId) {
+        return context.getPatientConsultations(pacilianId);
     }
 }

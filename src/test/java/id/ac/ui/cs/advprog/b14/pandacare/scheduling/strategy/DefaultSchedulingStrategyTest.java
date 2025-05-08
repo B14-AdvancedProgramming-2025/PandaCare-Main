@@ -7,6 +7,7 @@ import org.mockito.MockitoAnnotations;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ConsultationRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ScheduleRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.WorkingScheduleRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,11 +22,13 @@ public class DefaultSchedulingStrategyTest {
     private ConsultationRepository consultationRepository;
     
     private DefaultSchedulingStrategy strategy;
+
+    private WorkingScheduleRepository workingScheduleRepository;
     
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        strategy = new DefaultSchedulingStrategy(scheduleRepository, consultationRepository);
+        strategy = new DefaultSchedulingStrategy(scheduleRepository, consultationRepository, workingScheduleRepository);
     }
     
     @Test

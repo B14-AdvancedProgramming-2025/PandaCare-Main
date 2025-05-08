@@ -16,11 +16,13 @@ public class JpaConsultationRepositoryTest {
     private ConsultationJpaRepository jpaRepository;
     
     private JpaConsultationRepository repository;
+
+    private WorkingScheduleRepository workingScheduleRepository;
     
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        repository = new JpaConsultationRepository(jpaRepository);
+        repository = new JpaConsultationRepository(jpaRepository, workingScheduleRepository);
     }
     
     @Test

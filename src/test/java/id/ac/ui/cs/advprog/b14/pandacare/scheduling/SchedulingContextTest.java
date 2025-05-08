@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling;
 
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,11 +16,13 @@ public class SchedulingContextTest {
     private SchedulingStrategy mockStrategy;
     
     private SchedulingContext context;
+
+    private CaregiverRepositoryAdapter caregiverAdapter;
     
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        context = new SchedulingContext();
+        context = new SchedulingContext(caregiverAdapter);
         context.setStrategy(mockStrategy);
     }
 

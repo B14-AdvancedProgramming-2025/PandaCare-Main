@@ -1,6 +1,9 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
+
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,4 +12,7 @@ public interface ConsultationJpaRepository extends JpaRepository<Consultation, S
     
     Consultation findByCaregiverIdAndPacilianIdAndScheduleTime(
             String caregiverId, String pacilianId, String scheduleTime);
+
+    List<Consultation> findByCaregiverId(String caregiverId);
+    List<Consultation> findByPacilianId(String pacilianId);
 }

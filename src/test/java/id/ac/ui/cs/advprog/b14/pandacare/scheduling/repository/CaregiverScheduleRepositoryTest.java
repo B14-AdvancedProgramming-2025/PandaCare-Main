@@ -22,10 +22,12 @@ public class CaregiverScheduleRepositoryTest {
     
     private CaregiverScheduleRepository repository;
     
+    private WorkingScheduleRepository workingScheduleRepository;
+    
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        repository = new CaregiverScheduleRepository(caregiverAdapter);
+        repository = new CaregiverScheduleRepository(caregiverAdapter, workingScheduleRepository);
     }
     
     @Test
@@ -64,5 +66,25 @@ public class CaregiverScheduleRepositoryTest {
         
         assertTrue(result);
         verify(caregiverAdapter).findById("C001");
+    }
+
+    @Test
+    public void testSaveScheduleOverlap() {
+        List<String> schedules = new ArrayList<>();
+        schedules.add("Monday 08:00-12:00");
+        
+        Caregiver caregiver = new Caregiver(
+                "doctor@example.com", "password", "Dr. Example", 
+                "123456789", "123 Example St", "1234567890", 
+                "General Practice", schedules
+        );
+        
+        when(caregiverAdapter.findById("C001")).thenReturn(Optional.of(caregiver));
+        
+        boolean result = repository.saveSchedule("C001", "Monday 10:00-14:00");
+        
+        assertFalse(result);
+        verify(caregiverAdapter).findById("C001");
+        verify(caregiverAdapter, never()).save(any(Caregiver.class));
     }
 }

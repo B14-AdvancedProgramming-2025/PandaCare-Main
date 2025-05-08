@@ -2,7 +2,6 @@ package id.ac.ui.cs.advprog.b14.pandacare.scheduling.service;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.SchedulingContext;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.DefaultSchedulingStrategy;
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

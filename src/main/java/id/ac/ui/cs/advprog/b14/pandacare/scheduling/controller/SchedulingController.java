@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.controller;
 
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.SchedulingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/scheduling")
@@ -132,5 +134,44 @@ public class SchedulingController {
             response.put("message", "Failed to modify consultation");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+    }
+
+    @GetMapping("/schedules/{caregiverId}")
+    public ResponseEntity<Map<String, Object>> getCaregiverSchedules(@PathVariable String caregiverId) {
+        log.info("Getting schedules for caregiver {}", caregiverId);
+        
+        List<String> schedules = schedulingService.getCaregiverSchedules(caregiverId);
+        Map<String, Object> response = new HashMap<>();
+        
+        response.put("success", true);
+        response.put("schedules", schedules);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/consultations/{caregiverId}")
+    public ResponseEntity<Map<String, Object>> getCaregiverConsultations(@PathVariable String caregiverId) {
+        log.info("Getting consultations for caregiver {}", caregiverId);
+        
+        List<Consultation> consultations = schedulingService.getCaregiverConsultations(caregiverId);
+        Map<String, Object> response = new HashMap<>();
+        
+        response.put("success", true);
+        response.put("consultations", consultations);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/patient-consultations/{pacilianId}")
+    public ResponseEntity<Map<String, Object>> getPatientConsultations(@PathVariable String pacilianId) {
+        log.info("Getting consultations for patient {}", pacilianId);
+        
+        List<Consultation> consultations = schedulingService.getPatientConsultations(pacilianId);
+        Map<String, Object> response = new HashMap<>();
+        
+        response.put("success", true);
+        response.put("consultations", consultations);
+        
+        return ResponseEntity.ok(response);
     }
 }

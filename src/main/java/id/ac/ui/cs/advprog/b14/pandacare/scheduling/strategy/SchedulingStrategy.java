@@ -1,5 +1,9 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy;
 
+import java.util.List;
+
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
+
 public interface SchedulingStrategy {
     
     /**
@@ -31,4 +35,18 @@ public interface SchedulingStrategy {
      * @return true if successful, false otherwise
      */
     boolean updateConsultationStatus(String caregiverId, String pacilianId, String schedule, String status);
+    /**
+     * Gets consultations for a caregiver
+     * 
+     * @param caregiverId The ID of the caregiver
+     * @return List of consultations for the caregiver
+     */
+    List<Consultation> getCaregiverConsultations(String caregiverId);
+    /**
+     * Gets consultations for a patient
+     * 
+     * @param pacilianId The ID of the patient
+     * @return List of consultations for the patient
+     */
+    List<Consultation> getPatientConsultations(String pacilianId);
 }
