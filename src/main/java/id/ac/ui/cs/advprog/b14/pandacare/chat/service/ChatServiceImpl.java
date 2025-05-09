@@ -4,21 +4,30 @@ import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatMessage;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatRoom;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatMessageRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatRoomRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class ChatServiceImpl implements ChatService {
     
     private final ChatMessageRepository messageRepository;
     private final ChatRoomRepository roomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
     
-    public ChatServiceImpl(ChatMessageRepository messageRepository, ChatRoomRepository roomRepository) {
+    public ChatServiceImpl(
+            ChatMessageRepository messageRepository, 
+            ChatRoomRepository roomRepository, 
+            SimpMessagingTemplate messagingTemplate) {
         this.messageRepository = messageRepository;
         this.roomRepository = roomRepository;
+        this.messagingTemplate = messagingTemplate;
     }
     
     @Override
@@ -26,7 +35,7 @@ public class ChatServiceImpl implements ChatService {
         ChatRoom room;
         
         if (roomId != null) {
-            room = roomRepository.findById(roomId);
+            room = roomRepository.findById(roomId).orElse(null);
         } else {
             room = roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId);
             if (room == null) {
@@ -43,17 +52,18 @@ public class ChatServiceImpl implements ChatService {
                 room = new ChatRoom(newRoomId, senderId, recipientId);
                 roomRepository.save(room);
             }
-            
-            roomId = room.getRoomId();
         }
         
-        ChatMessage message = new ChatMessage(senderId, recipientId, content, LocalDateTime.now());
-        messageRepository.save(roomId, message);
+        ChatMessage message = new ChatMessage(senderId, recipientId, content, LocalDateTime.now(), room);
+        messageRepository.save(message);
+        
+        // Also send to recipient's personal queue for when they're online next
+        messagingTemplate.convertAndSend("/queue/messages/" + recipientId, message);
     }
     
     @Override
     public List<ChatMessage> getMessagesByRoomId(String roomId) {
-        return messageRepository.findByRoomId(roomId);
+        return messageRepository.findByChatRoomRoomId(roomId);
     }
     
     @Override
