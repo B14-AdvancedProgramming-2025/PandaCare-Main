@@ -1,94 +1,70 @@
 package id.ac.ui.cs.advprog.b14.pandacare.chat.storage;
 
 import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatRoom;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJpaTest
 class ChatRoomRepositoryTest {
-    
-    private ChatRoomRepository repository;
-    private ChatRoom room1;
-    private ChatRoom room2;
-    private String roomId1;
-    private String roomId2;
-    private String pacilianId;
-    private String caregiver1Id;
-    private String caregiver2Id;
-    
-    @BeforeEach
-    void setUp() {
-        repository = new ChatRoomRepository();
-        roomId1 = "room123";
-        roomId2 = "room456";
-        pacilianId = "pacilian789";
-        caregiver1Id = "caregiver111";
-        caregiver2Id = "caregiver222";
-        
-        room1 = new ChatRoom(roomId1, pacilianId, caregiver1Id);
-        room2 = new ChatRoom(roomId2, pacilianId, caregiver2Id);
-    }
-    
+
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
+
     @Test
-    void testSaveRoom() {
-        repository.save(room1);
-        
-        ChatRoom foundRoom = repository.findById(roomId1);
-        assertEquals(room1, foundRoom);
+    void testSaveAndFindById() {
+        ChatRoom room = new ChatRoom("room1", "p1", "c1");
+        chatRoomRepository.save(room);
+        Optional<ChatRoom> found = chatRoomRepository.findById("room1");
+        assertThat(found).isPresent();
+        assertThat(found.get().getRoomId()).isEqualTo("room1");
     }
-    
+
     @Test
-    void testFindByIdNonExistent() {
-        ChatRoom foundRoom = repository.findById("nonExistentRoom");
-        assertNull(foundRoom);
+    void testFindByIdEmpty() {
+        Optional<ChatRoom> found = chatRoomRepository.findById("nonexistent");
+        assertThat(found).isNotPresent();
     }
-    
+
     @Test
     void testFindByPacilianId() {
-        repository.save(room1);
-        repository.save(room2);
-        
-        List<ChatRoom> rooms = repository.findByPacilianId(pacilianId);
-        assertEquals(2, rooms.size());
-        assertTrue(rooms.contains(room1));
-        assertTrue(rooms.contains(room2));
+        ChatRoom r1 = new ChatRoom("room1", "p1", "c1");
+        ChatRoom r2 = new ChatRoom("room2", "p1", "c2");
+        chatRoomRepository.save(r1);
+        chatRoomRepository.save(r2);
+
+        List<ChatRoom> found = chatRoomRepository.findByPacilianId("p1");
+        assertThat(found).hasSize(2);
+        assertThat(found).extracting(ChatRoom::getRoomId)
+                        .containsExactlyInAnyOrder("room1", "room2");
     }
-    
+
     @Test
     void testFindByCaregiverId() {
-        repository.save(room1);
-        repository.save(room2);
-        
-        List<ChatRoom> rooms1 = repository.findByCaregiverId(caregiver1Id);
-        assertEquals(1, rooms1.size());
-        assertEquals(room1, rooms1.get(0));
-        
-        List<ChatRoom> rooms2 = repository.findByCaregiverId(caregiver2Id);
-        assertEquals(1, rooms2.size());
-        assertEquals(room2, rooms2.get(0));
+        ChatRoom r1 = new ChatRoom("room1", "p1", "c1");
+        ChatRoom r2 = new ChatRoom("room2", "p2", "c1");
+        chatRoomRepository.save(r1);
+        chatRoomRepository.save(r2);
+
+        List<ChatRoom> found = chatRoomRepository.findByCaregiverId("c1");
+        assertThat(found).hasSize(2);
+        assertThat(found).extracting(ChatRoom::getRoomId)
+                        .containsExactlyInAnyOrder("room1", "room2");
     }
-    
+
     @Test
-    void testFindAll() {
-        repository.save(room1);
-        repository.save(room2);
-        
-        List<ChatRoom> allRooms = repository.findAll();
-        assertEquals(2, allRooms.size());
-        assertTrue(allRooms.contains(room1));
-        assertTrue(allRooms.contains(room2));
-    }
-    
-    @Test
-    void testFindByPacilianIdAndCaregiverId() {
-        repository.save(room1);
-        repository.save(room2);
-        
-        ChatRoom foundRoom = repository.findByPacilianIdAndCaregiverId(pacilianId, caregiver1Id);
-        assertEquals(room1, foundRoom);
-        
-        ChatRoom foundRoom2 = repository.findByPacilianIdAndCaregiverId(pacilianId, caregiver2Id);
-        assertEquals(room2, foundRoom2);
+    void testFindByPacilianAndCaregiver() {
+        ChatRoom r1 = new ChatRoom("room1", "p1", "c1");
+        ChatRoom r2 = new ChatRoom("room2", "p1", "c2");
+        chatRoomRepository.save(r1);
+        chatRoomRepository.save(r2);
+
+        ChatRoom found = chatRoomRepository.findByPacilianIdAndCaregiverId("p1", "c1");
+        assertThat(found.getRoomId()).isEqualTo("room1");
     }
 } 
