@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,6 +24,9 @@ public class DoctorRatingServiceTest {
 
     @Test
     public void testCreateRating() {
+        when(doctorRatingRepository.save(any(DoctorRating.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
         DoctorRating created = doctorRatingService.createRating("care-1", "paci-1", 5, "Great doctor!");
         assertNotNull(created.getId());
         assertEquals("care-1", created.getCaregiverId());
@@ -60,18 +62,24 @@ public class DoctorRatingServiceTest {
     public void testUpdateRating() {
         DoctorRating existing = new DoctorRating("care-1", "paci-1", 3, "Okay");
         String id = existing.getId();
+
         when(doctorRatingRepository.findById(id)).thenReturn(existing);
+        when(doctorRatingRepository.save(any(DoctorRating.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         DoctorRating updated = doctorRatingService.updateRating(id, 5, "Much better");
 
         assertEquals(5, updated.getValue());
         assertEquals("Much better", updated.getComment());
-        verify(doctorRatingRepository).save(existing);
+        verify(doctorRatingRepository).save(any(DoctorRating.class));
     }
 
     @Test
     public void testDeleteRating() {
         String id = "some-id";
+
+        when(doctorRatingRepository.existsById(id)).thenReturn(true);
+
         doctorRatingService.deleteRating(id);
         verify(doctorRatingRepository, times(1)).deleteById(id);
     }
