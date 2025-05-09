@@ -5,12 +5,9 @@ import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.service.DoctorRatingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import static org.mockito.Mockito.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,17 +15,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DoctorRatingController.class)
+@AutoConfigureMockMvc(addFilters = false) // Disable Spring Security for test
 public class DoctorRatingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private DoctorRatingService doctorRatingService;
+    private DoctorRatingService doctorRatingService; // ✅ fix from @MockitoBean to @MockBean
 
     @Autowired
     private ObjectMapper objectMapper;
