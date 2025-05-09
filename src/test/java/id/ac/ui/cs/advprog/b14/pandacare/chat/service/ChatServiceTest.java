@@ -8,122 +8,112 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ChatServiceTest {
-    
-    private ChatService chatService;
-    
+
+    private ChatServiceImpl chatService;
+
     @Mock
     private ChatMessageRepository messageRepository;
-    
+
     @Mock
     private ChatRoomRepository roomRepository;
-    
-    private ChatRoom testRoom;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
     private String roomId;
-    private String pacilianId;
-    private String caregiverId;
-    
+    private String senderId;
+    private String recipientId;
+    private ChatRoom testRoom;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        chatService = new ChatServiceImpl(messageRepository, roomRepository);
-        
+        chatService = new ChatServiceImpl(messageRepository, roomRepository, messagingTemplate);
         roomId = "room123";
-        pacilianId = "pacilian456";
-        caregiverId = "caregiver789";
-        testRoom = new ChatRoom(roomId, pacilianId, caregiverId);
+        senderId = "sender456";
+        recipientId = "recipient789";
+        testRoom = new ChatRoom(roomId, senderId, recipientId);
     }
-    
+
     @Test
-    void testSendMessage() {
-        String content = "Hello, how are you?";
-        when(roomRepository.findById(roomId)).thenReturn(testRoom);
-        
-        chatService.sendMessage(roomId, pacilianId, caregiverId, content);
-        
-        verify(messageRepository, times(1)).save(eq(roomId), any(ChatMessage.class));
+    void testSendMessageWithExistingRoom() {
+        String content = "Hi there";
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(testRoom));
+        chatService.sendMessage(roomId, senderId, recipientId, content);
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/queue/messages/" + recipientId), any(ChatMessage.class));
     }
-    
+
     @Test
-    void testSendMessageRoomNotFound() {
-        String content = "Hello, how are you?";
-        when(roomRepository.findById(roomId)).thenReturn(null);
-        when(roomRepository.findByPacilianIdAndCaregiverId(pacilianId, caregiverId)).thenReturn(null);
+    void testSendMessageCreatesNewRoom() {
+        String content = "Hello world";
+        when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
+        when(roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId)).thenReturn(null);
+        when(roomRepository.findByPacilianIdAndCaregiverId(recipientId, senderId)).thenReturn(null);
         when(roomRepository.save(any(ChatRoom.class))).thenReturn(testRoom);
-        
-        chatService.sendMessage(null, pacilianId, caregiverId, content);
-        
+
+        chatService.sendMessage(null, senderId, recipientId, content);
+
         verify(roomRepository, times(1)).save(any(ChatRoom.class));
-        verify(messageRepository, times(1)).save(anyString(), any(ChatMessage.class));
+        verify(messageRepository, times(1)).save(any(ChatMessage.class));
+        verify(messagingTemplate, times(1)).convertAndSend(eq("/queue/messages/" + recipientId), any(ChatMessage.class));
     }
-    
+
     @Test
     void testGetMessagesByRoomId() {
-        List<ChatMessage> mockMessages = new ArrayList<>();
-        mockMessages.add(new ChatMessage(pacilianId, caregiverId, "Hello", LocalDateTime.now()));
-        mockMessages.add(new ChatMessage(caregiverId, pacilianId, "Hi there", LocalDateTime.now().plusMinutes(1)));
-        
-        when(messageRepository.findByRoomId(roomId)).thenReturn(mockMessages);
-        
-        List<ChatMessage> messages = chatService.getMessagesByRoomId(roomId);
-        
-        assertEquals(2, messages.size());
-        verify(messageRepository, times(1)).findByRoomId(roomId);
+        ChatMessage m1 = new ChatMessage(senderId, recipientId, "Msg1", LocalDateTime.now(), testRoom);
+        ChatMessage m2 = new ChatMessage(recipientId, senderId, "Msg2", LocalDateTime.now().plusMinutes(1), testRoom);
+        List<ChatMessage> mockList = List.of(m1, m2);
+        when(messageRepository.findByChatRoomRoomId(roomId)).thenReturn(mockList);
+        List<ChatMessage> result = chatService.getMessagesByRoomId(roomId);
+        assertEquals(mockList, result);
+        verify(messageRepository, times(1)).findByChatRoomRoomId(roomId);
     }
-    
+
     @Test
-    void testGetChatRoomByPacilianAndCaregiver() {
-        when(roomRepository.findByPacilianIdAndCaregiverId(pacilianId, caregiverId)).thenReturn(testRoom);
-        
-        ChatRoom room = chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
-        
+    void testGetChatRoomByPacilianAndCaregiverFound() {
+        when(roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId)).thenReturn(testRoom);
+        ChatRoom room = chatService.getChatRoomByPacilianAndCaregiver(senderId, recipientId);
         assertEquals(testRoom, room);
-        verify(roomRepository, times(1)).findByPacilianIdAndCaregiverId(pacilianId, caregiverId);
+        verify(roomRepository, times(1)).findByPacilianIdAndCaregiverId(senderId, recipientId);
     }
-    
+
     @Test
     void testGetChatRoomByPacilianAndCaregiverNotFound() {
-        when(roomRepository.findByPacilianIdAndCaregiverId(pacilianId, caregiverId)).thenReturn(null);
+        when(roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId)).thenReturn(null);
         when(roomRepository.save(any(ChatRoom.class))).thenReturn(testRoom);
-        
-        ChatRoom room = chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
-        
+        ChatRoom room = chatService.getChatRoomByPacilianAndCaregiver(senderId, recipientId);
         assertNotNull(room);
-        verify(roomRepository, times(1)).findByPacilianIdAndCaregiverId(pacilianId, caregiverId);
         verify(roomRepository, times(1)).save(any(ChatRoom.class));
     }
-    
+
     @Test
     void testGetChatRoomsByPacilianId() {
-        List<ChatRoom> mockRooms = List.of(testRoom);
-        when(roomRepository.findByPacilianId(pacilianId)).thenReturn(mockRooms);
-        
-        List<ChatRoom> rooms = chatService.getChatRoomsByPacilianId(pacilianId);
-        
+        when(roomRepository.findByPacilianId(senderId)).thenReturn(List.of(testRoom));
+        var rooms = chatService.getChatRoomsByPacilianId(senderId);
         assertEquals(1, rooms.size());
         assertEquals(testRoom, rooms.get(0));
-        verify(roomRepository, times(1)).findByPacilianId(pacilianId);
+        verify(roomRepository, times(1)).findByPacilianId(senderId);
     }
-    
+
     @Test
     void testGetChatRoomsByCaregiverId() {
-        List<ChatRoom> mockRooms = List.of(testRoom);
-        when(roomRepository.findByCaregiverId(caregiverId)).thenReturn(mockRooms);
-        
-        List<ChatRoom> rooms = chatService.getChatRoomsByCaregiverId(caregiverId);
-        
+        when(roomRepository.findByCaregiverId(recipientId)).thenReturn(List.of(testRoom));
+        var rooms = chatService.getChatRoomsByCaregiverId(recipientId);
         assertEquals(1, rooms.size());
         assertEquals(testRoom, rooms.get(0));
-        verify(roomRepository, times(1)).findByCaregiverId(caregiverId);
+        verify(roomRepository, times(1)).findByCaregiverId(recipientId);
     }
 } 
