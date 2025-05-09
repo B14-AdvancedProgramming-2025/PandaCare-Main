@@ -1,42 +1,41 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service;
 
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.model.Account;
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.repository.AccountRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+
+import java.util.NoSuchElementException;
 
 @Service
 public class AccountServiceImpl implements AccountService {
 
-    // Dummy database
-    private static final Map<String, Account> accountDatabase = new HashMap<>();
+    private final AccountRepository accountRepository;
+
+    public AccountServiceImpl(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
 
     @Override
-    public Account getAccountById(String id) {
-        return accountDatabase.get(id);
+    public Account getAccountById(UUID id) {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Account not found"));
     }
 
     @Override
     public Account updateAccount(Account account) {
-        if (!accountDatabase.containsKey(account.getId().toString())) {
+        if (!accountRepository.existsById(account.getId())) {
             throw new IllegalArgumentException("Account not found");
         }
-
-        accountDatabase.put(account.getId().toString(), account);
-        return account;
+        return accountRepository.save(account);
     }
 
     @Override
-    public void deleteAccount(String id) {
-        if (!accountDatabase.containsKey(id)) {
+    public void deleteAccount(UUID id) {
+        if (!accountRepository.existsById(id)) {
             throw new IllegalArgumentException("Account not found");
         }
-        accountDatabase.remove(id);
+        accountRepository.deleteById(id);
     }
 
-    static void insertTestAccount(Account account) {
-        accountDatabase.put(account.getId().toString(), account);
-    }
 }

@@ -1,86 +1,129 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.model;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.UUID;
-
 public class AccountTest {
 
-    private Account pacilliansAccount;
-    private Account caregiverAccount;
+    private UUID id;
+    private String email;
+    private String password;
+    private String name;
+    private String nik;
+    private String address;
+    private String phoneNumber;
 
     @BeforeEach
-    public void setup() {
-        pacilliansAccount = new Account(
-                UUID.randomUUID(), "pacillians@example.com", "password123", "John Doe", "1234567890",
-                "123 Street, City", "08123456789", "PACILIAN",
-                Arrays.asList("No allergies"), null, null
-        );
-
-        caregiverAccount = new Account(
-                UUID.randomUUID(), "caregiver@example.com", "securePassword123", "Dr. Smith", "0987654321",
-                "456 Clinic Rd", "08987654321", "CAREGIVER",
-                null, "Cardiology", Arrays.asList("Monday 9-5", "Tuesday 9-5")
-        );
+    void setUp() {
+        id = UUID.randomUUID();
+        email = "pacilian@example.com";
+        password = "securePass123";
+        name = "Jane Doe";
+        nik = "1234567890123456";
+        address = "Jl. Pandacare No.1";
+        phoneNumber = "08123456789";
     }
 
     @Test
-    public void testCreatePacilliansAccount() {
-        assertNotNull(pacilliansAccount);
-        assertNotNull(pacilliansAccount.getId());
-        assertEquals(pacilliansAccount.getEmail(), "pacillians@example.com");
-        assertEquals(pacilliansAccount.getName(), "John Doe");
-        assertEquals(pacilliansAccount.getNik(), "1234567890");
-        assertEquals(pacilliansAccount.getAddress(), "123 Street, City");
-        assertEquals(pacilliansAccount.getPhoneNumber(), "08123456789");
-        assertEquals(pacilliansAccount.getUserType(), "PACILIAN");
-        assertEquals(pacilliansAccount.getMedicalHistory(), Arrays.asList("No allergies"));
-        assertNull(pacilliansAccount.getSpecialty());
-        assertNull(pacilliansAccount.getWorkingSchedules());
+    void testBuildPacilianAccount() {
+        List<String> medicalHistory = Arrays.asList("Diabetes", "Hypertension");
+
+        Account account = Account.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .name(name)
+                .nik(nik)
+                .address(address)
+                .phoneNumber(phoneNumber)
+                .userType(UserType.PACILIAN)
+                .medicalHistory(medicalHistory)
+                .build();
+
+        assertEquals(UserType.PACILIAN, account.getUserType());
+        assertEquals(medicalHistory, account.getMedicalHistory());
+        assertNull(account.getSpecialty());
+        assertNull(account.getWorkingSchedules());
     }
 
     @Test
-    public void testCreateCaregiverAccount() {
-        assertNotNull(caregiverAccount);
-        assertNotNull(caregiverAccount.getId());
-        assertEquals(caregiverAccount.getEmail(), "caregiver@example.com");
-        assertEquals(caregiverAccount.getName(), "Dr. Smith");
-        assertEquals(caregiverAccount.getNik(), "0987654321");
-        assertEquals(caregiverAccount.getAddress(), "456 Clinic Rd");
-        assertEquals(caregiverAccount.getPhoneNumber(), "08987654321");
-        assertEquals(caregiverAccount.getUserType(), "CAREGIVER");
-        assertEquals(caregiverAccount.getSpecialty(), "Cardiology");
-        assertEquals(caregiverAccount.getWorkingSchedules(), Arrays.asList("Monday 9-5", "Tuesday 9-5"));
-        assertNull(caregiverAccount.getMedicalHistory());
+    void testBuildCaregiverAccount() {
+        List<String> schedules = Arrays.asList("Monday 9-12", "Tuesday 13-17");
+
+        Account account = Account.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .name(name)
+                .nik(nik)
+                .address(address)
+                .phoneNumber(phoneNumber)
+                .userType(UserType.CAREGIVER)
+                .specialty("Neurology")
+                .workingSchedules(schedules)
+                .build();
+
+        assertEquals(UserType.CAREGIVER, account.getUserType());
+        assertEquals("Neurology", account.getSpecialty());
+        assertEquals(schedules, account.getWorkingSchedules());
+        assertNull(account.getMedicalHistory());
     }
 
     @Test
-    public void testUUIDGeneration() {
-        assertNotNull(pacilliansAccount.getId());
-        assertNotNull(caregiverAccount.getId());
-        assertNotEquals(pacilliansAccount.getId(), caregiverAccount.getId());
+    void testEqualsAndHashCode() {
+        Account acc1 = Account.builder().id(id).email(email).build();
+        Account acc2 = Account.builder().id(id).email(email).build();
+
+        assertEquals(acc1, acc2);
+        assertEquals(acc1.hashCode(), acc2.hashCode());
     }
 
     @Test
-    public void testInvalidEmailFormat() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Account(UUID.randomUUID(), "invalid-email", "password123", "Jane Doe", "9876543210",
-                    "789 Road, City", "08123456788", "PACILIAN",
-                    null, null, null);
-        });
+    void testNoArgsConstructorAndSetters() {
+        Account account = new Account();
+        account.setId(id);
+        account.setEmail(email);
+        account.setPassword(password);
+        account.setName(name);
+        account.setNik(nik);
+        account.setAddress(address);
+        account.setPhoneNumber(phoneNumber);
+        account.setUserType(UserType.PACILIAN);
+        account.setMedicalHistory(Collections.singletonList("Asthma"));
+        account.setSpecialty(null);
+        account.setWorkingSchedules(null);
+
+        assertNotNull(account.getId());
+        assertEquals(UserType.PACILIAN, account.getUserType());
+        assertEquals("Asthma", account.getMedicalHistory().get(0));
     }
 
     @Test
-    public void testAccountWithMissingPassword() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Account(UUID.randomUUID(), "missingpassword@example.com", "", "Missing Password", "1122334455",
-                    "101 Street", "08123456780", "PACILIAN",
-                    null, null, null);
-        });
+    void testNullFieldsAllowedForOptionalData() {
+        Account account = Account.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .name(name)
+                .nik(nik)
+                .address(address)
+                .phoneNumber(phoneNumber)
+                .userType(UserType.PACILIAN)
+                .medicalHistory(null)
+                .specialty(null)
+                .workingSchedules(null)
+                .build();
+
+        assertNull(account.getMedicalHistory());
+        assertNull(account.getSpecialty());
+        assertNull(account.getWorkingSchedules());
     }
 }

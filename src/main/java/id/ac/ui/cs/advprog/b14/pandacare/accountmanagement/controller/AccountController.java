@@ -2,6 +2,7 @@ package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.model.Account;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service.AccountService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -17,18 +18,21 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    public Account getAccount(@PathVariable String id) {
-        return accountService.getAccountById(id);
+    public ResponseEntity<Account> getAccount(@PathVariable UUID id) {
+        Account account = accountService.getAccountById(id);
+        return ResponseEntity.ok(account);
     }
 
     @PutMapping("/{id}")
-    public Account updateAccount(@PathVariable String id, @RequestBody Account account) {
-        account.setId(UUID.fromString(id));
-        return accountService.updateAccount(account);
+    public ResponseEntity<Account> updateAccount(@PathVariable UUID id, @RequestBody Account account) {
+        account.setId(id);
+        Account updatedAccount = accountService.updateAccount(account);
+        return ResponseEntity.ok(updatedAccount);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteAccount(@PathVariable String id) {
+    public ResponseEntity<Void> deleteAccount(@PathVariable UUID id) {
         accountService.deleteAccount(id);
+        return ResponseEntity.noContent().build();
     }
 }
