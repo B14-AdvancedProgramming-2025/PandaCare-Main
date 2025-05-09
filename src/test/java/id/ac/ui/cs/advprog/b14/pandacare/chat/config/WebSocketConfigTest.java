@@ -16,7 +16,7 @@ class WebSocketConfigTest {
         WebSocketConfig config = new WebSocketConfig();
         config.configureMessageBroker(registry);
         
-        verify(registry).enableSimpleBroker("/topic");
+        verify(registry).enableSimpleBroker("/topic", "/queue");
         verify(registry).setApplicationDestinationPrefixes("/app");
     }
 
@@ -26,6 +26,7 @@ class WebSocketConfigTest {
         StompWebSocketEndpointRegistration registration = mock(StompWebSocketEndpointRegistration.class);
         
         when(registry.addEndpoint(anyString())).thenReturn(registration);
+        when(registration.setAllowedOriginPatterns(any())).thenReturn(registration);
         
         WebSocketConfig config = new WebSocketConfig();
         config.registerStompEndpoints(registry);

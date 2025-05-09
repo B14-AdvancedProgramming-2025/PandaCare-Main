@@ -1,65 +1,88 @@
 package id.ac.ui.cs.advprog.b14.pandacare.chat.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatMessage;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatRoom;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.service.ChatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class WebSocketControllerTest {
-
-    private WebSocketController webSocketController;
 
     @Mock
     private ChatService chatService;
 
+    private WebSocketController controller;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        webSocketController = new WebSocketController(chatService);
+        controller = new WebSocketController(chatService);
     }
 
     @Test
     void testSendMessage() {
-        String roomId = "room123";
-        String senderId = "sender456";
-        String recipientId = "recipient789";
-        String content = "Hello from WebSocket";
-        
-        ChatMessage inputMessage = new ChatMessage();
-        inputMessage.setSender(senderId);
-        inputMessage.setRecipient(recipientId);
-        inputMessage.setContent(content);
-        
-        doNothing().when(chatService).sendMessage(anyString(), anyString(), anyString(), anyString());
-        
-        ChatMessage outputMessage = webSocketController.sendMessage(roomId, inputMessage);
-        
-        assertNotNull(outputMessage);
-        assertEquals(senderId, outputMessage.getSender());
-        assertEquals(recipientId, outputMessage.getRecipient());
-        assertEquals(content, outputMessage.getContent());
-        assertNotNull(outputMessage.getTimestamp());
-        
-        verify(chatService, times(1)).sendMessage(eq(roomId), eq(senderId), eq(recipientId), eq(content));
+        String roomId = "room1";
+        String sender = "sender1";
+        String recipient = "recipient1";
+        String content = "Hello";
+        Map<String, String> messageMap = new HashMap<>();
+        messageMap.put("sender", sender);
+        messageMap.put("recipient", recipient);
+        messageMap.put("content", content);
+        SimpMessageHeaderAccessor headerAccessor = mock(SimpMessageHeaderAccessor.class);
+        when(headerAccessor.getSessionAttributes()).thenReturn(null);
+        ChatMessage response = controller.sendMessage(roomId, messageMap, headerAccessor);
+        assertNotNull(response);
+        assertEquals(sender, response.getSender());
+        assertEquals(recipient, response.getRecipient());
+        assertEquals(content, response.getContent());
+        assertNotNull(response.getTimestamp());
+        verify(chatService, times(1)).sendMessage(eq(roomId), eq(sender), eq(recipient), eq(content));
+    }
+
+    @Test
+    void testSubscribeToRoom() {
+        String roomId = "room2";
+        ChatMessage m1 = new ChatMessage("a", "b", "m", LocalDateTime.now());
+        List<ChatMessage> messages = Collections.singletonList(m1);
+        when(chatService.getMessagesByRoomId(roomId)).thenReturn(messages);
+        List<ChatMessage> result = controller.subscribeToRoom(roomId);
+        assertEquals(messages, result);
+        verify(chatService, times(1)).getMessagesByRoomId(roomId);
     }
 
     @Test
     void testCreateNewChatRoom() {
-        String pacilianId = "pacilian123";
-        String caregiverId = "caregiver456";
-        
-        webSocketController.createNewChatRoom(pacilianId, caregiverId);
-        
-        verify(chatService, times(1)).getChatRoomByPacilianAndCaregiver(eq(pacilianId), eq(caregiverId));
+        String pacilianId = "p1";
+        String caregiverId = "c1";
+        ChatRoom room = new ChatRoom("r1", pacilianId, caregiverId);
+        when(chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId)).thenReturn(room);
+        ChatRoom result = controller.createNewChatRoom(pacilianId, caregiverId);
+        assertEquals(room, result);
+        verify(chatService, times(1)).getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
+    }
+
+    @Test
+    void testSubscribeToUserQueue() {
+        String userId = "user1";
+        Map<String, Object> sessionAttrs = new HashMap<>();
+        SimpMessageHeaderAccessor headerAccessor = mock(SimpMessageHeaderAccessor.class);
+        when(headerAccessor.getSessionAttributes()).thenReturn(sessionAttrs);
+        controller.subscribeToUserQueue(userId, headerAccessor);
+        assertTrue(sessionAttrs.containsKey("userId"));
+        assertEquals(userId, sessionAttrs.get("userId"));
     }
 } 
