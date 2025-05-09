@@ -1,31 +1,47 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.decorator;
 
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 public class ConcreteDoctorRatingTest {
 
     @Test
-    public void testConcreteDoctorRatingGetters() {
-        DoctorRating rating = new DoctorRating();
-        Pacilian pacilian = new Pacilian("paci@test.com", "pass", "Paci Name", "1234", "Jl. A", "080000000", List.of());
-        Caregiver caregiver = new Caregiver("care@test.com", "pass", "Care Name", "5678", "Jl. B", "081111111", "Psychology", List.of("Monday"));
-        rating.setPacilian(pacilian);
-        rating.setCaregiver(caregiver);
-        rating.setValue(4);
-        rating.setComment("Great service");
+    public void testConcreteDoctorRatingSettersAndGetters() {
+        // Arrange
+        DoctorRating baseRating = new DoctorRating("caregiver-001", "pacilian-001", 3, "Good service");
+        ConcreteDoctorRating concreteRating = new ConcreteDoctorRating(baseRating);
 
+        // Act
+        concreteRating.setValue(5);
+        concreteRating.setComment("Excellent service!");
+
+        // Assert
+        assertEquals("caregiver-001", concreteRating.getCaregiverId());
+        assertEquals("pacilian-001", concreteRating.getPacilianId());
+        assertEquals(5, concreteRating.getValue());
+        assertEquals("Excellent service!", concreteRating.getComment());
+    }
+
+    @Test
+    public void testSetValueOutOfRangeThrowsException() {
+        DoctorRating rating = new DoctorRating("care-id", "paci-id", 3, "Test");
         ConcreteDoctorRating concreteRating = new ConcreteDoctorRating(rating);
 
-        assertEquals(pacilian, concreteRating.getPacilian());
-        assertEquals(caregiver, concreteRating.getCaregiver());
-        assertEquals(4, concreteRating.getValue());
-        assertEquals("Great service", concreteRating.getComment());
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            concreteRating.setValue(10); // invalid value
+        });
+
+        assertEquals("Rating value must be between 1 and 5.", exception.getMessage());
+    }
+
+    @Test
+    public void testTrimmedComment() {
+        DoctorRating rating = new DoctorRating("care-id", "paci-id", 3, "Test");
+        ConcreteDoctorRating concreteRating = new ConcreteDoctorRating(rating);
+
+        concreteRating.setComment("   Nice doctor   ");
+        assertEquals("Nice doctor", concreteRating.getComment());
     }
 }
