@@ -1,48 +1,14 @@
-//package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller;
-//
-//import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.model.Account;
-//import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service.AccountService;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.UUID;
-//
-//@RestController
-//@RequestMapping("/api/accounts")
-//public class AccountController {
-//
-//    private final AccountService accountService;
-//
-//    public AccountController(AccountService accountService) {
-//        this.accountService = accountService;
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Account> getAccount(@PathVariable UUID id) {
-//        Account account = accountService.getAccountById(id);
-//        return ResponseEntity.ok(account);
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Account> updateAccount(@PathVariable UUID id, @RequestBody Account account) {
-//        account.setId(id);
-//        Account updatedAccount = accountService.updateAccount(account);
-//        return ResponseEntity.ok(updatedAccount);
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteAccount(@PathVariable UUID id) {
-//        accountService.deleteAccount(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//}
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service.AccountService;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -52,18 +18,30 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getProfile(@PathVariable String id) {
-        return ResponseEntity.ok(accountService.getProfileById(id));
+    public ResponseEntity<ApiResponse<User>> getProfile(@PathVariable String id) {
+        User user = accountService.getProfileById(id);
+        ApiResponse<User> response = new ApiResponse<>(200, "Profile retrieved successfully", user);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateProfile(@PathVariable String id, @RequestBody User user) {
-        return ResponseEntity.ok(accountService.updateProfile(id, user));
+    public ResponseEntity<ApiResponse<User>> updateProfile(@PathVariable String id, @RequestBody User user) {
+        User updatedUser = accountService.updateProfile(id, user);
+        ApiResponse<User> response = new ApiResponse<>(200, "Profile updated successfully", updatedUser);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProfile(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<String>> deleteProfile(@PathVariable String id) {
         accountService.deleteProfile(id);
-        return ResponseEntity.noContent().build();
+        ApiResponse<String> response = new ApiResponse<>(200, "Profile deleted successfully", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ApiResponse<String>> handleNotFound(NoSuchElementException ex) {
+        ApiResponse<String> response = new ApiResponse<>(404, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }
+

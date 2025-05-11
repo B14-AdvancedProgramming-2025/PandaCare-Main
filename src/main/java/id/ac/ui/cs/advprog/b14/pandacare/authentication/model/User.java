@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "users")
@@ -18,6 +19,8 @@ import lombok.Setter;
         @JsonSubTypes.Type(value = Pacilian.class, name = "PACILIAN"),
         @JsonSubTypes.Type(value = Caregiver.class, name = "CAREGIVER")
 })
+
+@SuperBuilder
 public abstract class User {
     @Id
     private String id;
