@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.model;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
@@ -10,6 +12,12 @@ import lombok.Setter;
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter @Setter
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "userType")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Pacilian.class, name = "PACILIAN"),
+        @JsonSubTypes.Type(value = Caregiver.class, name = "CAREGIVER")
+})
 public abstract class User {
     @Id
     private String id;
