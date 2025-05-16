@@ -38,7 +38,7 @@ public class SchedulingControllerTest {
         
         ResponseEntity<Map<String, Object>> response = controller.createSchedule(requestBody);
         
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Schedule created successfully", response.getBody().get("message"));
         verify(schedulingService).createSchedule("C001", "Monday 10:00-12:00");
@@ -71,7 +71,7 @@ public class SchedulingControllerTest {
         
         ResponseEntity<Map<String, Object>> response = controller.bookConsultation(requestBody);
         
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Consultation booked successfully", response.getBody().get("message"));
         verify(schedulingService).bookConsultation("C001", "P001", "Monday 10:00-12:00");
@@ -79,52 +79,51 @@ public class SchedulingControllerTest {
     
     @Test
     public void testAcceptConsultation() {
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("caregiverId", "C001");
-        requestBody.put("pacilianId", "P001");
-        requestBody.put("schedule", "Monday 10:00-12:00");
+        String caregiverId = "C001";
+        String pacilianId = "P001";
+        String schedule = "Monday 10:00-12:00";
         
-        when(schedulingService.acceptConsultation("C001", "P001", "Monday 10:00-12:00")).thenReturn(true);
+        when(schedulingService.acceptConsultation(caregiverId, pacilianId, schedule)).thenReturn(true);
         
-        ResponseEntity<Map<String, Object>> response = controller.acceptConsultation(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.acceptConsultation(caregiverId, pacilianId, schedule);
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Consultation accepted successfully", response.getBody().get("message"));
-        verify(schedulingService).acceptConsultation("C001", "P001", "Monday 10:00-12:00");
+        verify(schedulingService).acceptConsultation(caregiverId, pacilianId, schedule);
     }
-    
+
     @Test
     public void testRejectConsultation() {
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("caregiverId", "C001");
-        requestBody.put("pacilianId", "P001");
-        requestBody.put("schedule", "Monday 10:00-12:00");
+        String caregiverId = "C001";
+        String pacilianId = "P001";
+        String schedule = "Monday 10:00-12:00";
         
-        when(schedulingService.rejectConsultation("C001", "P001", "Monday 10:00-12:00")).thenReturn(true);
+        when(schedulingService.rejectConsultation(caregiverId, pacilianId, schedule)).thenReturn(true);
         
-        ResponseEntity<Map<String, Object>> response = controller.rejectConsultation(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.rejectConsultation(caregiverId, pacilianId, schedule);
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Consultation rejected successfully", response.getBody().get("message"));
-        verify(schedulingService).rejectConsultation("C001", "P001", "Monday 10:00-12:00");
+        verify(schedulingService).rejectConsultation(caregiverId, pacilianId, schedule);
     }
-    
+
     @Test
     public void testModifyConsultation() {
+        String caregiverId = "C001";
+        String pacilianId = "P001";
+        String schedule = "Monday 10:00-12:00";
         Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("caregiverId", "C001");
-        requestBody.put("pacilianId", "P001");
-        requestBody.put("schedule", "Monday 10:00-12:00");
+        requestBody.put("newSchedule", "Tuesday 14:00-16:00");
         
-        when(schedulingService.modifyConsultation("C001", "P001", "Monday 10:00-12:00")).thenReturn(true);
+        when(schedulingService.modifyConsultation(caregiverId, pacilianId, schedule)).thenReturn(true);
         
-        ResponseEntity<Map<String, Object>> response = controller.modifyConsultation(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.modifyConsultation(caregiverId, pacilianId, schedule, requestBody);
         
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Consultation modified successfully", response.getBody().get("message"));
-        verify(schedulingService).modifyConsultation("C001", "P001", "Monday 10:00-12:00");
+        verify(schedulingService).modifyConsultation(caregiverId, pacilianId, schedule);
     }
 }

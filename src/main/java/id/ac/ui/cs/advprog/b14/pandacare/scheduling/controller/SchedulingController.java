@@ -36,7 +36,7 @@ public class SchedulingController {
         if (result) {
             response.put("success", true);
             response.put("message", "Schedule created successfully");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
             response.put("success", false);
             response.put("message", "Failed to create schedule");
@@ -44,7 +44,7 @@ public class SchedulingController {
         }
     }
     
-    @PostMapping("/book")
+    @PostMapping("/consultations")
     public ResponseEntity<Map<String, Object>> bookConsultation(@RequestBody Map<String, String> requestBody) {
         String caregiverId = requestBody.get("caregiverId");
         String pacilianId = requestBody.get("pacilianId");
@@ -59,7 +59,7 @@ public class SchedulingController {
         if (result) {
             response.put("success", true);
             response.put("message", "Consultation booked successfully");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
             response.put("success", false);
             response.put("message", "Failed to book consultation");
@@ -67,11 +67,12 @@ public class SchedulingController {
         }
     }
     
-    @PostMapping("/accept")
-    public ResponseEntity<Map<String, Object>> acceptConsultation(@RequestBody Map<String, String> requestBody) {
-        String caregiverId = requestBody.get("caregiverId");
-        String pacilianId = requestBody.get("pacilianId");
-        String schedule = requestBody.get("schedule");
+    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}/accept")
+    public ResponseEntity<Map<String, Object>> acceptConsultation(
+            @PathVariable String caregiverId,
+            @PathVariable String pacilianId,
+            @PathVariable String schedule) {
+        
         Map<String, Object> response = new HashMap<>();
         
         log.info("Accepting consultation: caregiver={}, pacilian={}, schedule={}",
@@ -90,11 +91,12 @@ public class SchedulingController {
         }
     }
     
-    @PostMapping("/reject")
-    public ResponseEntity<Map<String, Object>> rejectConsultation(@RequestBody Map<String, String> requestBody) {
-        String caregiverId = requestBody.get("caregiverId");
-        String pacilianId = requestBody.get("pacilianId");
-        String schedule = requestBody.get("schedule");
+    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}/reject")
+    public ResponseEntity<Map<String, Object>> rejectConsultation(
+            @PathVariable String caregiverId,
+            @PathVariable String pacilianId,
+            @PathVariable String schedule) {
+        
         Map<String, Object> response = new HashMap<>();
         
         log.info("Rejecting consultation: caregiver={}, pacilian={}, schedule={}",
@@ -113,11 +115,13 @@ public class SchedulingController {
         }
     }
     
-    @PostMapping("/modify")
-    public ResponseEntity<Map<String, Object>> modifyConsultation(@RequestBody Map<String, String> requestBody) {
-        String caregiverId = requestBody.get("caregiverId");
-        String pacilianId = requestBody.get("pacilianId");
-        String schedule = requestBody.get("schedule");
+    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}")
+    public ResponseEntity<Map<String, Object>> modifyConsultation(
+            @PathVariable String caregiverId,
+            @PathVariable String pacilianId, 
+            @PathVariable String schedule,
+            @RequestBody Map<String, String> requestBody) {
+        
         Map<String, Object> response = new HashMap<>();
         
         log.info("Modifying consultation: caregiver={}, pacilian={}, schedule={}",
@@ -149,7 +153,7 @@ public class SchedulingController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/consultations/{caregiverId}")
+    @GetMapping("/consultations/caregiver/{caregiverId}")
     public ResponseEntity<Map<String, Object>> getCaregiverConsultations(@PathVariable String caregiverId) {
         log.info("Getting consultations for caregiver {}", caregiverId);
         
@@ -162,7 +166,7 @@ public class SchedulingController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/patient-consultations/{pacilianId}")
+    @GetMapping("/consultations/patient/{pacilianId}")
     public ResponseEntity<Map<String, Object>> getPatientConsultations(@PathVariable String pacilianId) {
         log.info("Getting consultations for patient {}", pacilianId);
         
@@ -175,10 +179,11 @@ public class SchedulingController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/schedule/delete")
-    public ResponseEntity<Map<String, Object>> deleteSchedule(@RequestBody Map<String, String> requestBody) {
-        String caregiverId = requestBody.get("caregiverId");
-        String schedule = requestBody.get("schedule");
+    @DeleteMapping("/schedule/{caregiverId}/{schedule}")
+    public ResponseEntity<Map<String, Object>> deleteSchedule(
+            @PathVariable String caregiverId, 
+            @PathVariable String schedule) {
+        
         Map<String, Object> response = new HashMap<>();
         
         log.info("Deleting schedule for caregiver {}: {}", caregiverId, schedule);
@@ -196,11 +201,13 @@ public class SchedulingController {
         }
     }
 
-    @PostMapping("/schedule/modify")
-    public ResponseEntity<Map<String, Object>> modifySchedule(@RequestBody Map<String, Object> requestBody) {
-        String caregiverId = (String) requestBody.get("caregiverId");
-        String oldSchedule = (String) requestBody.get("oldSchedule");
-        String newSchedule = (String) requestBody.get("newSchedule");
+    @PutMapping("/schedule/{caregiverId}/{oldSchedule}")
+    public ResponseEntity<Map<String, Object>> modifySchedule(
+            @PathVariable String caregiverId,
+            @PathVariable String oldSchedule,
+            @RequestBody Map<String, String> requestBody) {
+        
+        String newSchedule = requestBody.get("newSchedule");
         Map<String, Object> response = new HashMap<>();
         
         log.info("Modifying schedule for caregiver {}: {} -> {}", 
