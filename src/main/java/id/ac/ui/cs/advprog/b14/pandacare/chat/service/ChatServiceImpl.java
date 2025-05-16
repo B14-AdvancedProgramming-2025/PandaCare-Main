@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.ChatMediator;
 
 @Service
 @Transactional
@@ -20,45 +21,22 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageRepository messageRepository;
     private final ChatRoomRepository roomRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatMediator chatMediator;
     
     public ChatServiceImpl(
             ChatMessageRepository messageRepository, 
             ChatRoomRepository roomRepository, 
-            SimpMessagingTemplate messagingTemplate) {
+            SimpMessagingTemplate messagingTemplate,
+            ChatMediator chatMediator) {
         this.messageRepository = messageRepository;
         this.roomRepository = roomRepository;
         this.messagingTemplate = messagingTemplate;
+        this.chatMediator = chatMediator;
     }
     
     @Override
     public void sendMessage(String roomId, String senderId, String recipientId, String content) {
-        ChatRoom room;
-        
-        if (roomId != null) {
-            room = roomRepository.findById(roomId).orElse(null);
-        } else {
-            room = roomRepository.findByPacilianIdAndCaregiverId(senderId, recipientId);
-            if (room == null) {
-                // If room doesn't exist, try with reversed roles
-                room = roomRepository.findByPacilianIdAndCaregiverId(recipientId, senderId);
-            }
-            
-            if (room == null) {
-                // Create a new room if it doesn't exist
-                String newRoomId = UUID.randomUUID().toString();
-                
-                // Determine who is pacilian and who is caregiver based on some logic
-                // For now, we'll assume the sender is the pacilian
-                room = new ChatRoom(newRoomId, senderId, recipientId);
-                roomRepository.save(room);
-            }
-        }
-        
-        ChatMessage message = new ChatMessage(senderId, recipientId, content, LocalDateTime.now(), room);
-        messageRepository.save(message);
-        
-        // Also send to recipient's personal queue for when they're online next
-        messagingTemplate.convertAndSend("/queue/messages/" + recipientId, message);
+        chatMediator.sendMessage(roomId, senderId, recipientId, content);
     }
     
     @Override

@@ -4,6 +4,8 @@ import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatMessage;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.model.ChatRoom;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatMessageRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatRoomRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.ChatMediator;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.ChatMediatorImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -23,6 +25,8 @@ class ChatServiceTest {
 
     private ChatServiceImpl chatService;
 
+    private ChatMediator chatMediator;
+
     @Mock
     private ChatMessageRepository messageRepository;
 
@@ -40,7 +44,8 @@ class ChatServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        chatService = new ChatServiceImpl(messageRepository, roomRepository, messagingTemplate);
+        chatMediator = new ChatMediatorImpl(messageRepository, roomRepository, messagingTemplate);
+        chatService = new ChatServiceImpl(messageRepository, roomRepository, messagingTemplate, chatMediator);
         roomId = "room123";
         senderId = "sender456";
         recipientId = "recipient789";
