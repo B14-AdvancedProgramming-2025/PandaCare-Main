@@ -1,5 +1,21 @@
 # PandaCare
 
+## Module 9 Tutorial B
+
+### 1. Deliverable G1
+
+#### A. Context Diagram
+
+![Context Diagram](./images/g1-1.png)
+
+#### B. Container Diagram
+
+![Container Diagram](./images/g1-2.png)
+
+#### C. Deployment Diagram
+
+![Deployment Diagram](./images/g1-3.png)
+
 ## Deployment Information
 
 This project uses Docker and GitHub Actions for CI/CD deployment to AWS.
