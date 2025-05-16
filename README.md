@@ -65,6 +65,28 @@ To address these risks, we've proposed a hybrid architecture that preserves the 
 
 This architectural evolution represents a pragmatic balance between operational simplicity and system resilience. Rather than undertaking a risky complete rewrite to microservices, we've chosen a targeted approach that addresses our most pressing concerns while maintaining the productivity advantages of our modular monolith. This strategy allows us to gradually transition toward a more distributed architecture as the application's needs evolve, following the principle of "evolve, don't rewrite."
 
+### 4. Deliverable G4 (`feat/chat` by absolutepraya)
+
+#### Container Diagram for Chat Module
+
+![Container Diagram for Chat Module](./images/g4-1.png)
+
+#### Component Diagram for Chat Module
+
+![Component Diagram for Chat Module](./images/g4-2.png)
+
+#### Class Diagram - Chat Module Models
+
+![Class Diagram - Chat Module Models](./images/g4-3.png)
+
+#### Class Diagram - Chat Module Services
+
+![Class Diagram - Chat Module Services](./images/g4-4.png)
+
+#### Sequence Diagram - Sending a Chat Message
+
+![Sequence Diagram - Sending a Chat Message](./images/g4-5.png)
+
 ## Deployment Information
 
 This project uses Docker and GitHub Actions for CI/CD deployment to AWS.
