@@ -16,6 +16,43 @@
 
 ![Deployment Diagram](./images/g1-3.png)
 
+### 2. Deliverable G2
+
+#### A. Risk Analysis
+
+After analyzing our current modular monolith architecture, we've identified several potential risks that could emerge as PandaCare grows in popularity and usage:
+
+1. **Scalability Limitations**
+
+   - Single Spring Boot application may struggle with high user load
+   - Monolithic database could become a performance bottleneck
+   - Real-time chat features require different scaling patterns than other services
+
+2. **Reliability Concerns**
+
+   - Single point of failure in the monolithic architecture
+   - Maintenance downtime affects all system features
+   - No effective isolation between critical and non-critical components
+
+3. **Development & Deployment Challenges**
+
+   - Growing codebase complexity despite modularization
+   - Deployment of the entire application for single feature updates
+   - Testing becomes increasingly complex with interdependent modules
+
+4. **Resource Efficiency Issues**
+   - Inefficient resource allocation (all modules scale together)
+   - Uneven resource utilization (some modules require more processing power)
+   - Limited ability to optimize specific modules independently
+
+#### B. Updated Context Diagram
+
+![Updated Context Diagram](./images/g2-2.png)
+
+#### C. Updated Container Diagram
+
+![Updated Container Diagram](./images/g2-3.png)
+
 ## Deployment Information
 
 This project uses Docker and GitHub Actions for CI/CD deployment to AWS.
