@@ -49,4 +49,22 @@ public interface SchedulingStrategy {
      * @return List of consultations for the patient
      */
     List<Consultation> getPatientConsultations(String pacilianId);
+    /**
+     * Deletes a schedule for a caregiver
+     * 
+     * @param caregiverId The ID of the caregiver
+     * @param schedule The schedule time slot to delete
+     * @return true if successful, false otherwise
+     */
+    boolean deleteSchedule(String caregiverId, String schedule);
+
+    /**
+     * Modifies a schedule for a caregiver
+     * 
+     * @param caregiverId The ID of the caregiver
+     * @param oldSchedule The old schedule time slot
+     * @param newSchedule The new schedule time slot
+     * @return true if successful, false otherwise
+     */
+    boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule);
 }

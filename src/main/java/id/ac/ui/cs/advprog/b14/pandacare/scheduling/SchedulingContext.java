@@ -69,4 +69,20 @@ public class SchedulingContext {
         }
         return strategy.getPatientConsultations(pacilianId);
     }
+
+    public boolean deleteSchedule(String caregiverId, String schedule) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.deleteSchedule(caregiverId, schedule);
+    }
+
+    public boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.modifySchedule(caregiverId, oldSchedule, newSchedule);
+    }
 }

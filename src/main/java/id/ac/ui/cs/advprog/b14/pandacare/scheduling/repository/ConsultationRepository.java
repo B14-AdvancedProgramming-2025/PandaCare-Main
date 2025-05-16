@@ -3,10 +3,17 @@ package id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository;
 import java.util.List;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ConsultationRepository {
-    boolean saveConsultation(String caregiverId, String pacilianId, String schedule, String status);
-    boolean updateStatus(String caregiverId, String pacilianId, String schedule, String status);
-    List<Consultation> findConsultationsByCaregiverId(String caregiverId);
-    List<Consultation> findConsultationsByPacilianId(String pacilianId);
+@Repository
+public interface ConsultationRepository extends JpaRepository<Consultation, String> {
+    
+    Consultation findByCaregiverIdAndPacilianIdAndScheduleTime(
+            String caregiverId, String pacilianId, String scheduleTime);
+
+    List<Consultation> findByCaregiverId(String caregiverId);
+    List<Consultation> findByPacilianId(String pacilianId);
+    List<Consultation> findByCaregiverIdAndScheduleTime(String caregiverId, String scheduleTime);
+    void delete(Consultation consultation);
 }

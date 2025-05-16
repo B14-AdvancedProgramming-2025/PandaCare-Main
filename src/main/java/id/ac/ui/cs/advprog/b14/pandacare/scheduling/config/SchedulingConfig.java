@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryA
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ConsultationRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ScheduleRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.WorkingScheduleRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.ConsultationService;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.DefaultSchedulingStrategy;
 
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,12 @@ public class SchedulingConfig {
     public DefaultSchedulingStrategy defaultSchedulingStrategy(
             ScheduleRepository scheduleRepository,
             ConsultationRepository consultationRepository,
-            WorkingScheduleRepository workingScheduleRepository) {
-        return new DefaultSchedulingStrategy(scheduleRepository, consultationRepository, workingScheduleRepository);
+            WorkingScheduleRepository workingScheduleRepository,
+            ConsultationService consultationService) {
+        return new DefaultSchedulingStrategy(
+                scheduleRepository, 
+                consultationRepository, 
+                workingScheduleRepository,
+                consultationService);
     }
 }

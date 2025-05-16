@@ -174,4 +174,48 @@ public class SchedulingController {
         
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/schedule/delete")
+    public ResponseEntity<Map<String, Object>> deleteSchedule(@RequestBody Map<String, String> requestBody) {
+        String caregiverId = requestBody.get("caregiverId");
+        String schedule = requestBody.get("schedule");
+        Map<String, Object> response = new HashMap<>();
+        
+        log.info("Deleting schedule for caregiver {}: {}", caregiverId, schedule);
+        
+        boolean result = schedulingService.deleteSchedule(caregiverId, schedule);
+        
+        if (result) {
+            response.put("success", true);
+            response.put("message", "Schedule deleted successfully");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "Failed to delete schedule");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
+    @PostMapping("/schedule/modify")
+    public ResponseEntity<Map<String, Object>> modifySchedule(@RequestBody Map<String, Object> requestBody) {
+        String caregiverId = (String) requestBody.get("caregiverId");
+        String oldSchedule = (String) requestBody.get("oldSchedule");
+        String newSchedule = (String) requestBody.get("newSchedule");
+        Map<String, Object> response = new HashMap<>();
+        
+        log.info("Modifying schedule for caregiver {}: {} -> {}", 
+                caregiverId, oldSchedule, newSchedule);
+        
+        boolean result = schedulingService.modifySchedule(caregiverId, oldSchedule, newSchedule);
+        
+        if (result) {
+            response.put("success", true);
+            response.put("message", "Schedule modified successfully");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "Failed to modify schedule");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 }

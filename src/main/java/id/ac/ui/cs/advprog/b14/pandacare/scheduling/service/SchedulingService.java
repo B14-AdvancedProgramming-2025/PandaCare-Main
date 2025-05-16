@@ -49,4 +49,12 @@ public class SchedulingService {
     public List<Consultation> getPatientConsultations(String pacilianId) {
         return context.getPatientConsultations(pacilianId);
     }
+
+    public boolean deleteSchedule(String caregiverId, String schedule) {
+        return context.deleteSchedule(caregiverId, schedule);
+    }
+
+    public boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule) {
+        return context.modifySchedule(caregiverId, oldSchedule, newSchedule);
+    }
 }
