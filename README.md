@@ -65,6 +65,23 @@ To address these risks, we've proposed a hybrid architecture that preserves the 
 
 This architectural evolution represents a pragmatic balance between operational simplicity and system resilience. Rather than undertaking a risky complete rewrite to microservices, we've chosen a targeted approach that addresses our most pressing concerns while maintaining the productivity advantages of our modular monolith. This strategy allows us to gradually transition toward a more distributed architecture as the application's needs evolve, following the principle of "evolve, don't rewrite."
 
+### 4. Deliverable G4 (`feat/account-management` by wiryaa23)
+
+#### Container Diagram
+![accountmanagement-1.png](images/accountmanagement-1.png)
+
+#### Component Diagram
+![accountmanagement-2.png](images/accountmanagement-2.png)
+
+### Class Diagram
+![accountmanagement-3.png](images/accountmanagement-3.png)
+
+### Sequence Diagram
+- Edit Profile
+![accountmanagement-4a.png](images/accountmanagement-4a.png)
+- Delete Account
+![accountmanagement-4b.png](images/accountmanagement-4b.png)
+
 ## Deployment Information
 
 This project uses Docker and GitHub Actions for CI/CD deployment to AWS.
