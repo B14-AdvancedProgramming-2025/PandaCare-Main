@@ -1,8 +1,10 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller;
 
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UpdateProfileDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service.AccountService;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller.ApiResponse;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,17 +20,16 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> getProfile(@PathVariable String id) {
-        User user = accountService.getProfileById(id);
-        ApiResponse<User> response = new ApiResponse<>(200, "Profile retrieved successfully", user);
+    public ResponseEntity<ApiResponse<UserDTO>> getProfile(@PathVariable String id) {
+        UserDTO user = accountService.getProfileById(id);
+        ApiResponse<UserDTO> response = new ApiResponse<>(200, "Profile retrieved successfully", user);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> updateProfile(@PathVariable String id, @RequestBody User user) {
-        User updatedUser = accountService.updateProfile(id, user);
-        ApiResponse<User> response = new ApiResponse<>(200, "Profile updated successfully", updatedUser);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<UserDTO> updateProfile(@PathVariable String id, @RequestBody UpdateProfileDTO dto) {
+        UserDTO updatedUser = accountService.updateProfile(id, dto);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")

@@ -1,12 +1,15 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service;
 
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UpdateProfileDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.*;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.CaregiverRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.PacilianRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,43 +19,66 @@ public class AccountServiceImpl implements AccountService {
     private final CaregiverRepository caregiverRepository;
 
     @Override
-    public User getProfileById(String id) {
-        return pacilianRepository.findById(id).map(user -> (User) user)
-                .or(() -> caregiverRepository.findById(id).map(user -> (User) user))
+    public UserDTO getProfileById(String id) {
+        User user = pacilianRepository.findById(id).map(u -> (User) u)
+                .or(() -> caregiverRepository.findById(id).map(u -> (User) u))
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
+        return convertToDTO(user);
     }
 
     @Override
-    public User updateProfile(String id, User updatedUser) {
-        if (updatedUser instanceof Pacilian pacilianUpdate) {
+    public UserDTO updateProfile(String id, UpdateProfileDTO dto) {
+
+        UserType type = dto.getType();
+        User savedUser;
+        System.out.println("Received user type: " + dto.getType());
+
+
+        if (type == UserType.PACILIAN) {
             Pacilian existing = pacilianRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Pacilian not found"));
 
-            if (!existing.getNik().equals(updatedUser.getNik())) {
-                throw new IllegalArgumentException("NIK cannot be updated");
+            if (dto.getEmail() != null && !existing.getEmail().equals(dto.getEmail())) {
+                throw new IllegalArgumentException("Email cannot be updated");
             }
 
-            updateCommonFields(existing, updatedUser);
-            existing.setMedicalHistory(pacilianUpdate.getMedicalHistory());
-            return pacilianRepository.save(existing);
+            existing.setName(dto.getName());
+            existing.setAddress(dto.getAddress());
+            existing.setPhone(dto.getPhone());
 
-        } else if (updatedUser instanceof Caregiver caregiverUpdate) {
+            if (dto.getMedicalHistory() != null) {
+                existing.setMedicalHistory(dto.getMedicalHistory());
+            }
+
+            savedUser = pacilianRepository.save(existing);
+
+        } else if (type == UserType.CAREGIVER) {
             Caregiver existing = caregiverRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Caregiver not found"));
 
-            if (!existing.getNik().equals(updatedUser.getNik())) {
-                throw new IllegalArgumentException("NIK cannot be updated");
+            if (dto.getEmail() != null && !existing.getEmail().equals(dto.getEmail())) {
+                throw new IllegalArgumentException("Email cannot be updated");
             }
 
-            updateCommonFields(existing, updatedUser);
-            existing.setSpecialty(caregiverUpdate.getSpecialty());
-            existing.setWorkingSchedule(caregiverUpdate.getWorkingSchedule());
-            return caregiverRepository.save(existing);
+            existing.setName(dto.getName());
+            existing.setAddress(dto.getAddress());
+            existing.setPhone(dto.getPhone());
+
+            if (dto.getSpecialty() != null) {
+                existing.setSpecialty(dto.getSpecialty());
+            }
+            if (dto.getWorkingSchedule() != null) {
+                existing.setWorkingSchedule(dto.getWorkingSchedule());
+            }
+
+            savedUser = caregiverRepository.save(existing);
+
+        } else {
+            throw new IllegalArgumentException("Invalid user type");
         }
 
-        throw new IllegalArgumentException("Invalid user type");
+        return convertToDTO(savedUser);
     }
-
 
     @Override
     public void deleteProfile(String id) {
@@ -65,11 +91,14 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
-    private void updateCommonFields(User existing, User updated) {
-        existing.setName(updated.getName());
-        existing.setEmail(updated.getEmail());
-        existing.setAddress(updated.getAddress());
-        existing.setPhone(updated.getPhone());
-        existing.setPassword(updated.getPassword());
+    private UserDTO convertToDTO(User user) {
+        return new UserDTO(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getType(),
+                user.getAddress(),
+                user.getPhone()
+        );
     }
 }
