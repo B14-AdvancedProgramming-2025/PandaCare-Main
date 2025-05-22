@@ -48,7 +48,7 @@ public class SchedulingControllerTest {
         when(schedulingService.createScheduleWithDateTime("C001", startTime, endTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.createScheduleWithDateTime(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.createSchedule(requestBody);
 
         // Verify
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -71,7 +71,7 @@ public class SchedulingControllerTest {
         when(schedulingService.createScheduleWithDateTime("C001", startTime, endTime)).thenReturn(false);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.createScheduleWithDateTime(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.createSchedule(requestBody);
 
         // Verify
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -95,7 +95,7 @@ public class SchedulingControllerTest {
         when(schedulingService.bookConsultationWithDateTime("C001", "P001", startTime, endTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.bookConsultationWithDateTime(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.bookConsultation(requestBody);
 
         // Verify
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -118,7 +118,7 @@ public class SchedulingControllerTest {
         when(schedulingService.acceptConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.acceptConsultationWithDateTime(
+        ResponseEntity<Map<String, Object>> response = controller.acceptConsultation(
                 caregiverId, pacilianId, startTimeStr, endTimeStr);
 
         // Verify
@@ -142,7 +142,7 @@ public class SchedulingControllerTest {
         when(schedulingService.rejectConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.rejectConsultationWithDateTime(
+        ResponseEntity<Map<String, Object>> response = controller.rejectConsultation(
                 caregiverId, pacilianId, startTimeStr, endTimeStr);
 
         // Verify
@@ -171,7 +171,7 @@ public class SchedulingControllerTest {
                 "C001", oldStartTime, oldEndTime, newStartTime, newEndTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.modifyScheduleWithDateTime(requestBody);
+        ResponseEntity<Map<String, Object>> response = controller.modifySchedule(requestBody);
 
         // Verify
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -194,7 +194,7 @@ public class SchedulingControllerTest {
         when(schedulingService.deleteScheduleWithDateTime(caregiverId, startTime, endTime)).thenReturn(true);
 
         // Execute
-        ResponseEntity<Map<String, Object>> response = controller.deleteScheduleWithDateTime(
+        ResponseEntity<Map<String, Object>> response = controller.deleteSchedule(
                 caregiverId, startTimeStr, endTimeStr);
 
         // Verify

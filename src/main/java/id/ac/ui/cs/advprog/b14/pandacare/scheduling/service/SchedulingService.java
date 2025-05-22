@@ -18,26 +18,6 @@ public class SchedulingService {
         this.context = context;
         this.context.setStrategy(defaultStrategy);
     }
-    
-    public boolean createSchedule(String caregiverId, String schedule) {
-        return context.createSchedule(caregiverId, schedule);
-    }
-    
-    public boolean bookConsultation(String caregiverId, String pacilianId, String schedule) {
-        return context.bookConsultation(caregiverId, pacilianId, schedule);
-    }
-    
-    public boolean acceptConsultation(String caregiverId, String pacilianId, String schedule) {
-        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "ACCEPTED");
-    }
-    
-    public boolean rejectConsultation(String caregiverId, String pacilianId, String schedule) {
-        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "REJECTED");
-    }
-    
-    public boolean modifyConsultation(String caregiverId, String pacilianId, String schedule) {
-        return context.updateConsultationStatus(caregiverId, pacilianId, schedule, "MODIFIED");
-    }
 
     public List<String> getCaregiverSchedules(String caregiverId) {
         return context.getCaregiverSchedules(caregiverId);
@@ -49,14 +29,6 @@ public class SchedulingService {
 
     public List<Consultation> getPatientConsultations(String pacilianId) {
         return context.getPatientConsultations(pacilianId);
-    }
-
-    public boolean deleteSchedule(String caregiverId, String schedule) {
-        return context.deleteSchedule(caregiverId, schedule);
-    }
-
-    public boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule) {
-        return context.modifySchedule(caregiverId, oldSchedule, newSchedule);
     }
 
     public boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {
@@ -101,5 +73,9 @@ public class SchedulingService {
     public List<Map<String, Object>> findAvailableCaregivers(
             LocalDateTime startTime, LocalDateTime endTime, String specialty) {
         return context.findAvailableCaregivers(startTime, endTime, specialty);
+    }
+
+    public List<Map<String, Object>> getCaregiverSchedulesFormatted(String caregiverId) {
+        return context.getCaregiverSchedulesFormatted(caregiverId);
     }
 }

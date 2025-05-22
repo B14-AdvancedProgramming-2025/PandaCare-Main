@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,88 +33,6 @@ public class CaregiverScheduleRepositoryTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         repository = new CaregiverScheduleRepository(caregiverAdapter, workingScheduleRepository);
-    }
-    
-    @Test
-    public void testSaveSchedule() {
-        // Create caregiver with empty schedule list
-        Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
-                "123456789", "123 Example St", "1234567890", 
-                "General Practice", new ArrayList<>()
-        );
-        
-        // Setup mocks
-        when(caregiverAdapter.findById("C001")).thenReturn(Optional.of(caregiver));
-        when(workingScheduleRepository.save(any(WorkingSchedule.class))).thenReturn(new WorkingSchedule());
-        
-        // Execute
-        boolean result = repository.saveSchedule("C001", "Monday 10:00-12:00");
-        
-        // Verify
-        assertTrue(result);
-        verify(caregiverAdapter).findById("C001"); 
-        // No longer saving to caregiver entity
-        verify(caregiverAdapter, never()).save(any(Caregiver.class));
-        verify(workingScheduleRepository).save(any(WorkingSchedule.class));
-    }
-    
-    @Test
-    public void testIsScheduleAvailable() {
-        // Setup
-        WorkingSchedule schedule = new WorkingSchedule();
-        schedule.setCaregiverId("C001");
-        schedule.setSchedule("Monday 10:00-12:00");
-        schedule.setAvailable(true);
-        
-        when(workingScheduleRepository.findByCaregiverIdAndSchedule("C001", "Monday 10:00-12:00"))
-            .thenReturn(Optional.of(schedule));
-        
-        // Execute
-        boolean result = repository.isScheduleAvailable("C001", "Monday 10:00-12:00");
-        
-        // Verify
-        assertTrue(result);
-        verify(workingScheduleRepository).findByCaregiverIdAndSchedule("C001", "Monday 10:00-12:00");
-    }
-
-    @Test
-    public void testSaveScheduleOverlap() {
-        // Setup - caregiver with existing overlapping schedule
-        List<String> schedules = new ArrayList<>();
-        schedules.add("Monday 08:00-12:00");
-        
-        Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
-                "123456789", "123 Example St", "1234567890", 
-                "General Practice", schedules
-        );
-        
-        when(caregiverAdapter.findById("C001")).thenReturn(Optional.of(caregiver));
-        
-        // Execute - try to add overlapping schedule
-        boolean result = repository.saveSchedule("C001", "Monday 10:00-14:00");
-
-        // Verify - should fail due to overlap
-        assertFalse(result);
-        verify(caregiverAdapter).findById("C001");
-        verify(caregiverAdapter, never()).save(any(Caregiver.class));
-        verify(workingScheduleRepository, never()).save(any(WorkingSchedule.class));
-    }
-
-    @Test
-    public void testSaveScheduleWithUnavailableCaregiver() {
-        // Setup - caregiver not found
-        when(caregiverAdapter.findById("C001")).thenReturn(Optional.empty());
-        
-        // Execute
-        boolean result = repository.saveSchedule("C001", "Monday 10:00-12:00");
-        
-        // Verify
-        assertFalse(result);
-        verify(caregiverAdapter).findById("C001");
-        verify(caregiverAdapter, never()).save(any(Caregiver.class));
-        verify(workingScheduleRepository, never()).save(any(WorkingSchedule.class));
     }
 
     @Test
@@ -324,15 +243,18 @@ public class CaregiverScheduleRepositoryTest {
         // Setup
         List<WorkingSchedule> schedules = new ArrayList<>();
         
+        // Create DateTime-based schedules
         WorkingSchedule schedule1 = new WorkingSchedule();
         schedule1.setCaregiverId("C001");
-        schedule1.setSchedule("Monday 10:00-12:00");
+        schedule1.setStartTime(LocalDateTime.of(2025, 5, 15, 10, 0));
+        schedule1.setEndTime(LocalDateTime.of(2025, 5, 15, 12, 0));
         schedule1.setAvailable(true);
         schedules.add(schedule1);
         
         WorkingSchedule schedule2 = new WorkingSchedule();
         schedule2.setCaregiverId("C001");
-        schedule2.setSchedule("Tuesday 14:00-16:00");
+        schedule2.setStartTime(LocalDateTime.of(2025, 5, 16, 14, 0));
+        schedule2.setEndTime(LocalDateTime.of(2025, 5, 16, 16, 0));
         schedule2.setAvailable(true);
         schedules.add(schedule2);
         
@@ -343,8 +265,13 @@ public class CaregiverScheduleRepositoryTest {
         
         // Verify
         assertEquals(2, result.size());
-        assertTrue(result.contains("Monday 10:00-12:00"));
-        assertTrue(result.contains("Tuesday 14:00-16:00"));
+        // Format should match what's used in the repository implementation
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        String expected1 = schedule1.getStartTime().format(formatter) + "-" + schedule1.getEndTime().format(formatter);
+        String expected2 = schedule2.getStartTime().format(formatter) + "-" + schedule2.getEndTime().format(formatter);
+        
+        assertTrue(result.contains(expected1));
+        assertTrue(result.contains(expected2));
         verify(workingScheduleRepository).findByCaregiverId("C001");
     }
 }

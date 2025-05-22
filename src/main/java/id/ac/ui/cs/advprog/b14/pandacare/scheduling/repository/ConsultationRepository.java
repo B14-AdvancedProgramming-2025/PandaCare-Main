@@ -10,16 +10,10 @@ import java.util.List;
 @Repository
 public interface ConsultationRepository extends JpaRepository<Consultation, String> {
     
-    // Legacy methods for backward compatibility
     List<Consultation> findByCaregiverId(String caregiverId);
     
     List<Consultation> findByPacilianId(String pacilianId);
-    
-    List<Consultation> findByCaregiverIdAndScheduleTime(String caregiverId, String scheduleTime);
-    
-    Consultation findByCaregiverIdAndPacilianIdAndScheduleTime(String caregiverId, String pacilianId, String scheduleTime);
-    
-    // New methods using DateTime
+
     List<Consultation> findByCaregiverIdAndStartTimeBetween(String caregiverId, LocalDateTime startTime, LocalDateTime endTime);
     
     List<Consultation> findByPacilianIdAndStartTimeBetween(String pacilianId, LocalDateTime startTime, LocalDateTime endTime);

@@ -7,23 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 public interface SchedulingStrategy {
-    
-    // Legacy methods for backward compatibility
-    boolean createSchedule(String caregiverId, String schedule);
-    
-    boolean bookConsultation(String caregiverId, String pacilianId, String schedule);
-    
-    boolean updateConsultationStatus(String caregiverId, String pacilianId, String schedule, String status);
-    
-    boolean deleteSchedule(String caregiverId, String schedule);
-    
-    boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule);
-    
     List<Consultation> getCaregiverConsultations(String caregiverId);
     
     List<Consultation> getPatientConsultations(String pacilianId);
+
+    List<String> getCaregiverSchedules(String caregiverId);
     
-    // New methods with DateTime
     boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime);
     
     boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
@@ -40,4 +29,6 @@ public interface SchedulingStrategy {
 
     List<Map<String, Object>> findAvailableCaregivers(
             LocalDateTime startTime, LocalDateTime endTime, String specialty);
+
+    List<Map<String, Object>> getCaregiverSchedulesFormatted(String caregiverId);
 }

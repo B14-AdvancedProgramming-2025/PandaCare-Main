@@ -26,25 +26,6 @@ public class ConsultationService {
         this.workingScheduleRepository = workingScheduleRepository;
     }
     
-    // Legacy method for backward compatibility
-    @Transactional
-    public boolean saveConsultation(String caregiverId, String pacilianId, String scheduleTime, String status) {
-        try {
-            String consultationId = UUID.randomUUID().toString();
-            
-            Consultation consultation = new Consultation(consultationId, caregiverId, pacilianId, scheduleTime, status);
-            consultationRepository.save(consultation);
-            
-            updateScheduleAvailability(caregiverId, scheduleTime, false, "BOOKED");
-            
-            return true;
-        } catch (Exception e) {
-            log.error("Error saving consultation", e);
-            return false;
-        }
-    }
-    
-    // New method using DateTime
     @Transactional
     public boolean saveConsultationWithDateTime(String caregiverId, String pacilianId, 
                                             LocalDateTime startTime, LocalDateTime endTime, String status) {
@@ -63,33 +44,6 @@ public class ConsultationService {
         }
     }
     
-    // Legacy method for backward compatibility
-    @Transactional
-    public boolean updateStatus(String caregiverId, String pacilianId, String schedule, String status) {
-        try {
-            Consultation consultation = consultationRepository
-                    .findByCaregiverIdAndPacilianIdAndScheduleTime(caregiverId, pacilianId, schedule);
-            
-            if (consultation == null) {
-                log.error("Consultation not found");
-                return false;
-            }
-            
-            consultation.setStatus(status);
-            consultationRepository.save(consultation);
-
-            if ("REJECTED".equals(status)) {
-                updateScheduleAvailability(caregiverId, schedule, true, "AVAILABLE");
-            }
-            
-            return true;
-        } catch (Exception e) {
-            log.error("Error updating consultation status", e);
-            return false;
-        }
-    }
-    
-    // New method using DateTime
     @Transactional
     public boolean updateStatusWithDateTime(String caregiverId, String pacilianId, 
                                         LocalDateTime startTime, LocalDateTime endTime, String status) {
@@ -115,20 +69,7 @@ public class ConsultationService {
             return false;
         }
     }
-    
-    // Legacy method for backward compatibility
-    private boolean updateScheduleAvailability(String caregiverId, String scheduleTime, boolean isAvailable, String status) {
-        try {
-            int updatedRows = workingScheduleRepository.updateAvailability(
-                    caregiverId, scheduleTime, isAvailable, status);
-            return updatedRows > 0;
-        } catch (Exception e) {
-            log.error("Error updating schedule availability", e);
-            return false;
-        }
-    }
-    
-    // New method using DateTime
+
     private boolean updateScheduleAvailabilityByDateTime(String caregiverId, LocalDateTime startTime, 
                                                     LocalDateTime endTime, boolean isAvailable, String status) {
         try {
@@ -150,7 +91,10 @@ public class ConsultationService {
     }
 
     @Transactional
-    public boolean updateConsultationSchedule(String consultationId, String newScheduleTime, String newStatus) {
+    public boolean updateConsultationScheduleWithDateTime(String consultationId, 
+                                                    LocalDateTime newStartTime, 
+                                                    LocalDateTime newEndTime, 
+                                                    String newStatus) {
         try {
             Optional<Consultation> optConsultation = consultationRepository.findById(consultationId);
             
@@ -160,7 +104,8 @@ public class ConsultationService {
             }
             
             Consultation consultation = optConsultation.get();
-            consultation.setScheduleTime(newScheduleTime);
+            consultation.setStartTime(newStartTime);
+            consultation.setEndTime(newEndTime);
             consultation.setStatus(newStatus);
             consultationRepository.save(consultation);
             
