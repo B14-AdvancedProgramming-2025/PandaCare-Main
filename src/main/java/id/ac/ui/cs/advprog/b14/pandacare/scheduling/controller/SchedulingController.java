@@ -411,4 +411,34 @@ public class SchedulingController {
     public boolean deleteScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {
         return schedulingService.deleteScheduleWithDateTime(caregiverId, startTime, endTime);
     }
+
+    @GetMapping("/caregivers/available")
+    public ResponseEntity<Map<String, Object>> findAvailableCaregivers(
+            @RequestParam String startTime,
+            @RequestParam String endTime,
+            @RequestParam(required = false) String specialty) {
+        
+        log.info("Finding available caregivers for startTime={}, endTime={}, specialty={}", 
+                startTime, endTime, specialty);
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
+            LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+            
+            List<Map<String, Object>> availableCaregivers = 
+                    schedulingService.findAvailableCaregivers(startDateTime, endDateTime, specialty);
+            
+            response.put("success", true);
+            response.put("caregivers", availableCaregivers);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error finding available caregivers", e);
+            response.put("success", false);
+            response.put("message", "Error finding available caregivers: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 }

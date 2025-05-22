@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SchedulingService {
@@ -95,5 +96,10 @@ public class SchedulingService {
     public boolean deleteScheduleWithDateTime(String caregiverId, 
                                         LocalDateTime startTime, LocalDateTime endTime) {
         return context.deleteScheduleWithDateTime(caregiverId, startTime, endTime);
+    }
+
+    public List<Map<String, Object>> findAvailableCaregivers(
+            LocalDateTime startTime, LocalDateTime endTime, String specialty) {
+        return context.findAvailableCaregivers(startTime, endTime, specialty);
     }
 }

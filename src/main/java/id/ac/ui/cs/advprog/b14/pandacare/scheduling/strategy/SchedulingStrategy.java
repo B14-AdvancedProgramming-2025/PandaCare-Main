@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface SchedulingStrategy {
     
@@ -36,4 +37,7 @@ public interface SchedulingStrategy {
     boolean modifyScheduleWithDateTime(String caregiverId, 
                                     LocalDateTime oldStartTime, LocalDateTime oldEndTime, 
                                     LocalDateTime newStartTime, LocalDateTime newEndTime);
+
+    List<Map<String, Object>> findAvailableCaregivers(
+            LocalDateTime startTime, LocalDateTime endTime, String specialty);
 }

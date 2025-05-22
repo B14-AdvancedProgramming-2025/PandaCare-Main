@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ConsultationRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ScheduleRepository;
@@ -10,7 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class DefaultSchedulingStrategy implements SchedulingStrategy {
@@ -19,15 +25,18 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     private final ScheduleRepository scheduleRepository;
     private final ConsultationRepository consultationRepository;
     private final ConsultationService consultationService;
+    private final CaregiverRepositoryAdapter caregiverAdapter;
     
     public DefaultSchedulingStrategy(
             ScheduleRepository scheduleRepository, 
             ConsultationRepository consultationRepository,
             WorkingScheduleRepository workingScheduleRepository,
-            ConsultationService consultationService) {
+            ConsultationService consultationService,
+            CaregiverRepositoryAdapter caregiverAdapter) {
         this.scheduleRepository = scheduleRepository;
         this.consultationRepository = consultationRepository;
         this.consultationService = consultationService;
+        this.caregiverAdapter = caregiverAdapter;
     }
     
     @Override
@@ -153,7 +162,7 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     
     @Override
     public boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
-                                             LocalDateTime startTime, LocalDateTime endTime) {
+                                            LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Booking consultation for caregiver {} with patient {}: {} to {}", 
                 caregiverId, pacilianId, startTime, endTime);
         
@@ -231,5 +240,47 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
         }
         
         return true;
+    }
+
+    @Override
+    public List<Map<String, Object>> findAvailableCaregivers(
+            LocalDateTime startTime, LocalDateTime endTime, String specialty) {
+        
+        log.info("Finding available caregivers: startTime={}, endTime={}, specialty={}", 
+                startTime, endTime, specialty);
+        
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        // Get all caregivers
+        List<Caregiver> allCaregivers = caregiverAdapter.findAll();
+        
+        // Filter by specialty if provided
+        if (specialty != null && !specialty.isEmpty()) {
+            allCaregivers = allCaregivers.stream()
+                .filter(caregiver -> specialty.equals(caregiver.getSpecialty()))
+                .collect(Collectors.toList());
+        }
+        
+        // Check each caregiver's availability
+        for (Caregiver caregiver : allCaregivers) {
+            String caregiverId = caregiver.getId();
+            
+            // Check if the caregiver has this time slot available
+            boolean isAvailable = scheduleRepository.isScheduleAvailableByDateTime(
+                    caregiverId, startTime, endTime);
+            
+            if (isAvailable) {
+                Map<String, Object> caregiverInfo = new HashMap<>();
+                caregiverInfo.put("id", caregiverId);
+                caregiverInfo.put("name", caregiver.getName());
+                caregiverInfo.put("specialty", caregiver.getSpecialty());
+                caregiverInfo.put("email", caregiver.getEmail());
+                caregiverInfo.put("phone", caregiver.getPhone());
+                
+                result.add(caregiverInfo);
+            }
+        }
+        
+        return result;
     }
 }

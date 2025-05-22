@@ -8,6 +8,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -132,5 +133,14 @@ public class SchedulingContext {
         }
         return strategy.modifyScheduleWithDateTime(
             caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
+    }
+
+    public List<Map<String, Object>> findAvailableCaregivers(
+            LocalDateTime startTime, LocalDateTime endTime, String specialty) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return new ArrayList<>();
+        }
+        return strategy.findAvailableCaregivers(startTime, endTime, specialty);
     }
 }
