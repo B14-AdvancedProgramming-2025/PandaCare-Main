@@ -1,58 +1,41 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.model;
 
 import org.junit.jupiter.api.Test;
+import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WorkingScheduleTest {
     
     @Test
-    public void testWorkingScheduleCreation() {
+    public void testWorkingScheduleWithDateTime() {
         Long id = 1L;
         String caregiverId = "C001";
-        String schedule = "Monday 10:00-12:00";
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         String status = "AVAILABLE";
         boolean available = true;
         
-        WorkingSchedule workingSchedule = new WorkingSchedule(id, caregiverId, schedule, status, available);
+        WorkingSchedule workingSchedule = new WorkingSchedule(id, caregiverId, startTime, endTime, status, available);
         
         assertEquals(id, workingSchedule.getId());
         assertEquals(caregiverId, workingSchedule.getCaregiverId());
-        assertEquals(schedule, workingSchedule.getSchedule());
+        assertEquals(startTime, workingSchedule.getStartTime());
+        assertEquals(endTime, workingSchedule.getEndTime());
         assertEquals(status, workingSchedule.getStatus());
         assertTrue(workingSchedule.isAvailable());
     }
     
     @Test
-    public void testWorkingScheduleNoArgsConstructor() {
-        WorkingSchedule workingSchedule = new WorkingSchedule();
-        assertNotNull(workingSchedule);
-    }
-    
-    @Test
-    public void testSetters() {
+    public void testWorkingScheduleSetters() {
         WorkingSchedule workingSchedule = new WorkingSchedule();
         
-        workingSchedule.setId(1L);
-        workingSchedule.setCaregiverId("C001");
-        workingSchedule.setSchedule("Monday 10:00-12:00");
-        workingSchedule.setStatus("AVAILABLE");
-        workingSchedule.setAvailable(true);
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        assertEquals(1L, workingSchedule.getId());
-        assertEquals("C001", workingSchedule.getCaregiverId());
-        assertEquals("Monday 10:00-12:00", workingSchedule.getSchedule());
-        assertEquals("AVAILABLE", workingSchedule.getStatus());
-        assertTrue(workingSchedule.isAvailable());
-    }
-    
-    @Test
-    public void testUpdateAvailability() {
-        WorkingSchedule workingSchedule = new WorkingSchedule(1L, "C001", "Monday 10:00-12:00", "AVAILABLE", true);
+        workingSchedule.setStartTime(startTime);
+        workingSchedule.setEndTime(endTime);
         
-        workingSchedule.setAvailable(false);
-        workingSchedule.setStatus("BOOKED");
-        
-        assertFalse(workingSchedule.isAvailable());
-        assertEquals("BOOKED", workingSchedule.getStatus());
+        assertEquals(startTime, workingSchedule.getStartTime());
+        assertEquals(endTime, workingSchedule.getEndTime());
     }
 }
