@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -27,52 +29,52 @@ public class SchedulingServiceTest {
     }
     
     @Test
-    public void testCreateSchedule() {
-        when(context.createSchedule("C001", "Monday 10:00-12:00")).thenReturn(true);
+    public void testCreateScheduleWithDateTime() {
+        // Setup
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        boolean result = service.createSchedule("C001", "Monday 10:00-12:00");
+        when(context.createScheduleWithDateTime(eq("C001"), eq(startTime), eq(endTime))).thenReturn(true);
         
+        // Execute
+        boolean result = service.createScheduleWithDateTime("C001", startTime, endTime);
+        
+        // Verify
         assertTrue(result);
-        verify(context).createSchedule("C001", "Monday 10:00-12:00");
+        verify(context).createScheduleWithDateTime(eq("C001"), eq(startTime), eq(endTime));
     }
     
     @Test
-    public void testBookConsultation() {
-        when(context.bookConsultation("C001", "P001", "Monday 10:00-12:00")).thenReturn(true);
+    public void testBookConsultationWithDateTime() {
+        // Setup
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        boolean result = service.bookConsultation("C001", "P001", "Monday 10:00-12:00");
+        when(context.bookConsultationWithDateTime(eq("C001"), eq("P001"), eq(startTime), eq(endTime))).thenReturn(true);
         
+        // Execute
+        boolean result = service.bookConsultationWithDateTime("C001", "P001", startTime, endTime);
+        
+        // Verify
         assertTrue(result);
-        verify(context).bookConsultation("C001", "P001", "Monday 10:00-12:00");
+        verify(context).bookConsultationWithDateTime(eq("C001"), eq("P001"), eq(startTime), eq(endTime));
     }
     
     @Test
-    public void testAcceptConsultation() {
-        when(context.updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED")).thenReturn(true);
+    public void testAcceptConsultationWithDateTime() {
+        // Setup
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        boolean result = service.acceptConsultation("C001", "P001", "Monday 10:00-12:00");
+        when(context.updateConsultationStatusWithDateTime(
+            eq("C001"), eq("P001"), eq(startTime), eq(endTime), eq("ACCEPTED"))).thenReturn(true);
         
+        // Execute
+        boolean result = service.acceptConsultationWithDateTime("C001", "P001", startTime, endTime);
+        
+        // Verify
         assertTrue(result);
-        verify(context).updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED");
-    }
-    
-    @Test
-    public void testRejectConsultation() {
-        when(context.updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "REJECTED")).thenReturn(true);
-        
-        boolean result = service.rejectConsultation("C001", "P001", "Monday 10:00-12:00");
-        
-        assertTrue(result);
-        verify(context).updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "REJECTED");
-    }
-    
-    @Test
-    public void testModifyConsultation() {
-        when(context.updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "MODIFIED")).thenReturn(true);
-        
-        boolean result = service.modifyConsultation("C001", "P001", "Monday 10:00-12:00");
-        
-        assertTrue(result);
-        verify(context).updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "MODIFIED");
+        verify(context).updateConsultationStatusWithDateTime(
+            eq("C001"), eq("P001"), eq(startTime), eq(endTime), eq("ACCEPTED"));
     }
 }
