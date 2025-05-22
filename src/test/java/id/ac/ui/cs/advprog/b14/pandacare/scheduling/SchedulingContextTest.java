@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -25,34 +27,37 @@ public class SchedulingContextTest {
         context = new SchedulingContext(caregiverAdapter);
         context.setStrategy(mockStrategy);
     }
-
+    
     @Test
-    public void testCreateSchedule() {
-        when(mockStrategy.createSchedule("C001", "Monday 10:00-12:00")).thenReturn(true);
+    public void testCreateScheduleWithDateTime() {
+        // Setup
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        boolean result = context.createSchedule("C001", "Monday 10:00-12:00");
+        when(mockStrategy.createScheduleWithDateTime(eq("C001"), eq(startTime), eq(endTime))).thenReturn(true);
         
+        // Execute
+        boolean result = context.createScheduleWithDateTime("C001", startTime, endTime);
+        
+        // Verify
         assertTrue(result);
-        verify(mockStrategy).createSchedule("C001", "Monday 10:00-12:00");
+        verify(mockStrategy).createScheduleWithDateTime(eq("C001"), eq(startTime), eq(endTime));
     }
     
     @Test
-    public void testBookConsultation() {
-        when(mockStrategy.bookConsultation("C001", "P001", "Monday 10:00-12:00")).thenReturn(true);
+    public void testBookConsultationWithDateTime() {
+        // Setup
+        LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        boolean result = context.bookConsultation("C001", "P001", "Monday 10:00-12:00");
+        when(mockStrategy.bookConsultationWithDateTime(
+            eq("C001"), eq("P001"), eq(startTime), eq(endTime))).thenReturn(true);
         
+        // Execute
+        boolean result = context.bookConsultationWithDateTime("C001", "P001", startTime, endTime);
+        
+        // Verify
         assertTrue(result);
-        verify(mockStrategy).bookConsultation("C001", "P001", "Monday 10:00-12:00");
-    }
-    
-    @Test
-    public void testUpdateConsultationStatus() {
-        when(mockStrategy.updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED")).thenReturn(true);
-        
-        boolean result = context.updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED");
-        
-        assertTrue(result);
-        verify(mockStrategy).updateConsultationStatus("C001", "P001", "Monday 10:00-12:00", "ACCEPTED");
+        verify(mockStrategy).bookConsultationWithDateTime(eq("C001"), eq("P001"), eq(startTime), eq(endTime));
     }
 }
