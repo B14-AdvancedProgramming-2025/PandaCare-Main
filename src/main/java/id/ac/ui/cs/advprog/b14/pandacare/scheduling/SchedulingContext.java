@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryA
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -84,5 +85,52 @@ public class SchedulingContext {
             return false;
         }
         return strategy.modifySchedule(caregiverId, oldSchedule, newSchedule);
+    }
+
+    // New methods with DateTime
+    public boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.createScheduleWithDateTime(caregiverId, startTime, endTime);
+    }
+    
+    public boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.bookConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime);
+    }
+    
+    public boolean updateConsultationStatusWithDateTime(String caregiverId, String pacilianId, 
+                                                    LocalDateTime startTime, LocalDateTime endTime, String status) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.updateConsultationStatusWithDateTime(caregiverId, pacilianId, startTime, endTime, status);
+    }
+    
+    public boolean deleteScheduleWithDateTime(String caregiverId, 
+                                        LocalDateTime startTime, LocalDateTime endTime) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.deleteScheduleWithDateTime(caregiverId, startTime, endTime);
+    }
+    
+    public boolean modifyScheduleWithDateTime(String caregiverId, 
+                                        LocalDateTime oldStartTime, LocalDateTime oldEndTime, 
+                                        LocalDateTime newStartTime, LocalDateTime newEndTime) {
+        if (strategy == null) {
+            log.error("No scheduling strategy set");
+            return false;
+        }
+        return strategy.modifyScheduleWithDateTime(
+            caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
     }
 }
