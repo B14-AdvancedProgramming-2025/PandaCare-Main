@@ -3,10 +3,10 @@ package id.ac.ui.cs.advprog.b14.pandacare.scheduling.service;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.SchedulingContext;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.DefaultSchedulingStrategy;
-
-import java.util.List;
-
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class SchedulingService {
@@ -56,5 +56,44 @@ public class SchedulingService {
 
     public boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule) {
         return context.modifySchedule(caregiverId, oldSchedule, newSchedule);
+    }
+
+    public boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {
+        return context.createScheduleWithDateTime(caregiverId, startTime, endTime);
+    }
+    
+    public boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime) {
+        return context.bookConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime);
+    }
+    
+    public boolean acceptConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime) {
+        return context.updateConsultationStatusWithDateTime(
+            caregiverId, pacilianId, startTime, endTime, "ACCEPTED");
+    }
+    
+    public boolean rejectConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime) {
+        return context.updateConsultationStatusWithDateTime(
+            caregiverId, pacilianId, startTime, endTime, "REJECTED");
+    }
+    
+    public boolean modifyConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime) {
+        return context.updateConsultationStatusWithDateTime(
+            caregiverId, pacilianId, startTime, endTime, "MODIFIED");
+    }
+    
+    public boolean modifyScheduleWithDateTime(String caregiverId, 
+                                        LocalDateTime oldStartTime, LocalDateTime oldEndTime, 
+                                        LocalDateTime newStartTime, LocalDateTime newEndTime) {
+        return context.modifyScheduleWithDateTime(
+            caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
+    }
+    
+    public boolean deleteScheduleWithDateTime(String caregiverId, 
+                                        LocalDateTime startTime, LocalDateTime endTime) {
+        return context.deleteScheduleWithDateTime(caregiverId, startTime, endTime);
     }
 }
