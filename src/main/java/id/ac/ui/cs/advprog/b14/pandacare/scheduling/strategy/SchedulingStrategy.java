@@ -1,70 +1,39 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy;
 
-import java.util.List;
-
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface SchedulingStrategy {
     
-    /**
-     * Creates a schedule for a caregiver
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @param schedule The schedule time slot
-     * @return true if successful, false otherwise
-     */
+    // Legacy methods for backward compatibility
     boolean createSchedule(String caregiverId, String schedule);
     
-    /**
-     * Books a consultation with a caregiver
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @param pacilianId The ID of the patient
-     * @param schedule The schedule time slot
-     * @return true if successful, false otherwise
-     */
     boolean bookConsultation(String caregiverId, String pacilianId, String schedule);
     
-    /**
-     * Updates the status of a consultation
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @param pacilianId The ID of the patient
-     * @param schedule The schedule time slot
-     * @param status The new status (ACCEPTED, REJECTED, MODIFIED)
-     * @return true if successful, false otherwise
-     */
     boolean updateConsultationStatus(String caregiverId, String pacilianId, String schedule, String status);
-    /**
-     * Gets consultations for a caregiver
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @return List of consultations for the caregiver
-     */
-    List<Consultation> getCaregiverConsultations(String caregiverId);
-    /**
-     * Gets consultations for a patient
-     * 
-     * @param pacilianId The ID of the patient
-     * @return List of consultations for the patient
-     */
-    List<Consultation> getPatientConsultations(String pacilianId);
-    /**
-     * Deletes a schedule for a caregiver
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @param schedule The schedule time slot to delete
-     * @return true if successful, false otherwise
-     */
+    
     boolean deleteSchedule(String caregiverId, String schedule);
-
-    /**
-     * Modifies a schedule for a caregiver
-     * 
-     * @param caregiverId The ID of the caregiver
-     * @param oldSchedule The old schedule time slot
-     * @param newSchedule The new schedule time slot
-     * @return true if successful, false otherwise
-     */
+    
     boolean modifySchedule(String caregiverId, String oldSchedule, String newSchedule);
+    
+    List<Consultation> getCaregiverConsultations(String caregiverId);
+    
+    List<Consultation> getPatientConsultations(String pacilianId);
+    
+    // New methods with DateTime
+    boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime);
+    
+    boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                    LocalDateTime startTime, LocalDateTime endTime);
+    
+    boolean updateConsultationStatusWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime, String status);
+    
+    boolean deleteScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime);
+    
+    boolean modifyScheduleWithDateTime(String caregiverId, 
+                                    LocalDateTime oldStartTime, LocalDateTime oldEndTime, 
+                                    LocalDateTime newStartTime, LocalDateTime newEndTime);
 }
