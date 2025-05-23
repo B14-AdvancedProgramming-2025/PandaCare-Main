@@ -83,4 +83,27 @@ public class DoctorRatingServiceTest {
         doctorRatingService.deleteRating(id);
         verify(doctorRatingRepository, times(1)).deleteById(id);
     }
+
+    @Test
+    void shouldReturnRatingsByDoctorAsync() throws Exception {
+        DoctorRating r = new DoctorRating("doc-99", "pac-1", 5, "Great");
+        when(doctorRatingRepository.findByCaregiverId("doc-99"))
+                .thenReturn(List.of(r));
+
+        CompletableFuture<List<DoctorRating>> future =
+                doctorRatingService.findByDoctorId("doc-99");
+
+        assertEquals(1, future.get().size());
+    }
+
+    // test/DoctorRatingControllerTest.java  ⬇️ tambahkan
+    @Test
+    void shouldExposeEndpointByDoctor() throws Exception {
+        when(doctorRatingService.findByDoctorId("doc-99"))
+                .thenReturn(CompletableFuture.completedFuture(List.of(rating)));
+
+        mockMvc.perform(get("/api/ratings/doctor/doc-99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].caregiverId").value("doc-99"));
+    }
 }
