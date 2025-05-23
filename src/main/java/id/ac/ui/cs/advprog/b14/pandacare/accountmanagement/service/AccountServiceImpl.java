@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.CaregiverRepo
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.PacilianRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -29,6 +30,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public UserDTO updateProfile(String id, UpdateProfileDTO dto) {
 
+        // Ambil data user berdasarkan tipe
         UserType type = dto.getType();
         User savedUser;
         System.out.println("Received user type: " + dto.getType());
@@ -42,10 +44,12 @@ public class AccountServiceImpl implements AccountService {
                 throw new IllegalArgumentException("Email cannot be updated");
             }
 
+            // Update field umum
             existing.setName(dto.getName());
             existing.setAddress(dto.getAddress());
             existing.setPhone(dto.getPhone());
 
+            // Update field khusus Pacilian
             if (dto.getMedicalHistory() != null) {
                 existing.setMedicalHistory(dto.getMedicalHistory());
             }
@@ -60,10 +64,13 @@ public class AccountServiceImpl implements AccountService {
                 throw new IllegalArgumentException("Email cannot be updated");
             }
 
+
+            // Update field umum
             existing.setName(dto.getName());
             existing.setAddress(dto.getAddress());
             existing.setPhone(dto.getPhone());
 
+            // Update field khusus Caregiver
             if (dto.getSpecialty() != null) {
                 existing.setSpecialty(dto.getSpecialty());
             }
@@ -81,6 +88,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Async
     public void deleteProfile(String id) {
         if (pacilianRepository.existsById(id)) {
             pacilianRepository.deleteById(id);
