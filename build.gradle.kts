@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("io.github.cdimascio:java-dotenv:5.2.2")
     implementation("io.projectreactor.netty:reactor-netty")
     implementation("org.postgresql:postgresql")
     implementation("com.h2database:h2")

@@ -1,0 +1,1 @@
+org.springframework.context.ApplicationContextInitializer=id.ac.ui.cs.advprog.b14.pandacare.config.DotenvConfig 
