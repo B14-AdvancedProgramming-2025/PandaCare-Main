@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/ratings")
@@ -58,5 +59,10 @@ public class DoctorRatingController {
     public ResponseEntity<String> deleteRating(@PathVariable String id) {
         doctorRatingService.deleteRating(id);
         return ResponseEntity.ok("Rating deleted successfully.");
+    }
+
+    @GetMapping("/doctor/{doctorId}")
+    public CompletableFuture<ResponseEntity<List<DoctorRating>>> getByDoctor(@PathVariable String doctorId) {
+              return doctorRatingService.findByDoctorId(doctorId).thenApply(ResponseEntity::ok);
     }
 }

@@ -30,4 +30,8 @@ public class DoctorRatingRepository {
     public boolean existsById(String id) {
         return storage.containsKey(id);
     }
+
+    public List<DoctorRating> findByCaregiverId(String caregiverId) {
+        return storage.values().stream().filter(r -> r.getCaregiverId().equals(caregiverId)).toList();
+    }
 }

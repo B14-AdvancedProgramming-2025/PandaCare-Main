@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -96,14 +97,5 @@ public class DoctorRatingServiceTest {
         assertEquals(1, future.get().size());
     }
 
-    // test/DoctorRatingControllerTest.java  ⬇️ tambahkan
-    @Test
-    void shouldExposeEndpointByDoctor() throws Exception {
-        when(doctorRatingService.findByDoctorId("doc-99"))
-                .thenReturn(CompletableFuture.completedFuture(List.of(rating)));
 
-        mockMvc.perform(get("/api/ratings/doctor/doc-99"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].caregiverId").value("doc-99"));
-    }
 }

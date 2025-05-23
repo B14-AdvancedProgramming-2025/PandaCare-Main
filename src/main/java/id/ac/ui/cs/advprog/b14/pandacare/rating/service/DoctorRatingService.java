@@ -4,9 +4,11 @@ import id.ac.ui.cs.advprog.b14.pandacare.rating.decorator.ConcreteDoctorRating;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.repository.DoctorRatingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DoctorRatingService {
@@ -61,5 +63,11 @@ public class DoctorRatingService {
         }
 
         doctorRatingRepository.deleteById(id);
+    }
+
+    @Async
+    public CompletableFuture<List<DoctorRating>> findByDoctorId(String doctorId) {
+        return CompletableFuture.supplyAsync(() -> doctorRatingRepository
+                .findByCaregiverId(doctorId));
     }
 }
