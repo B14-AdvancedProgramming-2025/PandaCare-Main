@@ -56,12 +56,18 @@ public abstract class User {
 
     protected User() {}
 
-    public User(String email, String password, String name, String nik, String address, String phone) {
+    public User(String id, String email, String password, String name, String nik, String address, String phone, UserType type) {
+        this.id = id;
         this.email = email;
         this.password = password;
         this.name = name;
         this.nik = nik;
         this.address = address;
         this.phone = phone;
+        this.type = type;
+    }
+
+    public String getRole() {
+        return type.toString();
     }
 }

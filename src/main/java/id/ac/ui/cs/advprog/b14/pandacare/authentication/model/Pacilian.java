@@ -19,8 +19,8 @@ public class Pacilian extends User {
 
     protected Pacilian() {}
 
-    public Pacilian(String email, String password, String name, String nik, String address, String phone, List<String> medicalHistory) {
-        super(email, password, name, nik, address, phone);
+    public Pacilian(String id, String email, String password, String name, String nik, String address, String phone, List<String> medicalHistory) {
+        super(id, email, password, name, nik, address, phone, UserType.PACILIAN);
         this.medicalHistory = medicalHistory;
     }
 }
