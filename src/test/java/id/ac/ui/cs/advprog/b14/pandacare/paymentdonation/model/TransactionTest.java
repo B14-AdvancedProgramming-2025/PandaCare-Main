@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 class TransactionTest {
-
-    // Concrete implementation of the abstract Transaction class for testing
     private static class ConcreteTransaction extends Transaction {
         public ConcreteTransaction() {
             super();
