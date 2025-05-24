@@ -51,13 +51,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 if (token != null && !token.isExpired()) {
                     String email = jwtUtil.getEmailFromToken(tokenString);
+                    String role = jwtUtil.getRoleFromToken(tokenString);
                     User user = userRepository.findByEmail(email);
                     if (user != null) {
                         List<GrantedAuthority> authorities = new ArrayList<>();
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
 
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                email, null, authorities
+                                user, null, authorities
                         );
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }

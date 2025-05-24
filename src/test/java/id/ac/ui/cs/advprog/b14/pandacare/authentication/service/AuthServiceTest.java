@@ -102,10 +102,11 @@ class AuthServiceTest {
     void loginSuccessful() {
         when(mockUser.getEmail()).thenReturn("test@example.com");
         when(mockUser.getPassword()).thenReturn("encodedPassword");
+        when(mockUser.getRole()).thenReturn("USER");
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(mockUser);
         when(passwordEncoder.matches("password123", "encodedPassword")).thenReturn(true);
-        when(jwtUtil.generateToken("test@example.com")).thenReturn(validToken);
+        when(jwtUtil.generateToken("test@example.com", "USER")).thenReturn(validToken);
         when(jwtUtil.getExpirationDateFromToken(validToken)).thenReturn(expiryDate);
 
         ResponseEntity<Map<String, Object>> response = authService.login(loginRequest);
@@ -260,7 +261,8 @@ class AuthServiceTest {
         when(tokenRepository.findByToken(validToken)).thenReturn(mockToken);
         when(jwtUtil.getEmailFromToken(validToken)).thenReturn("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(mockUser);
-        when(jwtUtil.generateToken("test@example.com")).thenReturn(newToken);
+        when(mockUser.getRole()).thenReturn("USER");
+        when(jwtUtil.generateToken("test@example.com", "USER")).thenReturn(newToken);
         when(jwtUtil.getExpirationDateFromToken(newToken)).thenReturn(expiryDate);
 
         ResponseEntity<Map<String, Object>> response = authService.refreshToken(authHeader);
