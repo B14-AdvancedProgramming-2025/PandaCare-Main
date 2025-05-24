@@ -1,54 +1,83 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
 import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class TransactionTest {
 
-    @Mock
-    private Wallet mockWallet;
+    // Concrete implementation of the abstract Transaction class for testing
+    private static class ConcreteTransaction extends Transaction {
+        public ConcreteTransaction() {
+            super();
+        }
+
+        public ConcreteTransaction(Double amount, String description, Wallet wallet, TransactionType type) {
+            super(amount, description, wallet, type);
+        }
+    }
 
     @Test
     void testDefaultConstructor() {
-        MockitoAnnotations.openMocks(this);
-
-        Transaction transaction = new Transaction();
+        ConcreteTransaction transaction = new ConcreteTransaction();
 
         assertNull(transaction.getId());
-        assertNull(transaction.getWallet());
         assertNull(transaction.getAmount());
-        assertNull(transaction.getType());
         assertNull(transaction.getDescription());
-        assertNull(transaction.getProvider());
+        assertNull(transaction.getType());
         assertNotNull(transaction.getTimestamp());
-        assertTrue(LocalDateTime.now().isAfter(transaction.getTimestamp()) ||
-                LocalDateTime.now().isEqual(transaction.getTimestamp()));
+        assertNull(transaction.getWallet());
+    }
+
+    @Test
+    void testParameterizedConstructor() {
+        Double amount = 100.0;
+        String description = "Test transaction";
+        Wallet mockWallet = mock(Wallet.class);
+        TransactionType type = TransactionType.TOPUP;
+
+        ConcreteTransaction transaction = new ConcreteTransaction(amount, description, mockWallet, type);
+
+        assertNull(transaction.getId());
+        assertEquals(amount, transaction.getAmount());
+        assertEquals(description, transaction.getDescription());
+        assertEquals(mockWallet, transaction.getWallet());
+        assertEquals(type, transaction.getType());
+        assertNotNull(transaction.getTimestamp());
     }
 
     @Test
     void testSetters() {
-        MockitoAnnotations.openMocks(this);
+        ConcreteTransaction transaction = new ConcreteTransaction();
+        Long id = 1L;
+        Double amount = 100.0;
+        String description = "Test transaction";
+        Wallet mockWallet = mock(Wallet.class);
+        TransactionType type = TransactionType.TOPUP;
+        LocalDateTime timestamp = LocalDateTime.now();
 
-        Transaction transaction = new Transaction();
-        LocalDateTime testTime = LocalDateTime.now().minusHours(1);
-
-        transaction.setId(1L);
+        transaction.setId(id);
+        transaction.setAmount(amount);
+        transaction.setDescription(description);
         transaction.setWallet(mockWallet);
-        transaction.setAmount(100.0);
-        transaction.setType(TransactionType.TOPUP);
-        transaction.setDescription("Test transaction");
-        transaction.setProvider("Test Provider");
-        transaction.setTimestamp(testTime);
+        transaction.setType(type);
+        transaction.setTimestamp(timestamp);
 
-        assertEquals(1L, transaction.getId());
+        assertEquals(id, transaction.getId());
+        assertEquals(amount, transaction.getAmount());
+        assertEquals(description, transaction.getDescription());
         assertEquals(mockWallet, transaction.getWallet());
-        assertEquals(100.0, transaction.getAmount());
-        assertEquals(TransactionType.TOPUP, transaction.getType());
-        assertEquals("Test transaction", transaction.getDescription());
-        assertEquals("Test Provider", transaction.getProvider());
-        assertEquals(testTime, transaction.getTimestamp());
+        assertEquals(type, transaction.getType());
+        assertEquals(timestamp, transaction.getTimestamp());
+    }
+
+    @Test
+    void testTransactionTypeEnum() {
+        assertEquals("TOPUP", TransactionType.TOPUP.name());
+        assertEquals("TIP", TransactionType.TIP.name());
+        assertEquals("TRANSFER", TransactionType.TRANSFER.name());
     }
 }
