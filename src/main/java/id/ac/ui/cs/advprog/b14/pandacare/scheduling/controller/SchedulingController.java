@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -18,20 +20,24 @@ public class SchedulingController {
 
     private static final Logger log = LoggerFactory.getLogger(SchedulingController.class);
     private final SchedulingService schedulingService;
-    
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     public SchedulingController(SchedulingService schedulingService) {
         this.schedulingService = schedulingService;
     }
-    
+
     @PostMapping("/schedule")
     public ResponseEntity<Map<String, Object>> createSchedule(@RequestBody Map<String, String> requestBody) {
         String caregiverId = requestBody.get("caregiverId");
-        String schedule = requestBody.get("schedule");
+        LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime"), formatter);
+        LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime"), formatter);
+        
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Creating schedule for caregiver {}: {}", caregiverId, schedule);
+        log.info("Creating schedule with date time: caregiver={}, startTime={}, endTime={}", 
+                caregiverId, startTime, endTime);
         
-        boolean result = schedulingService.createSchedule(caregiverId, schedule);
+        boolean result = schedulingService.createScheduleWithDateTime(caregiverId, startTime, endTime);
         
         if (result) {
             response.put("success", true);
@@ -43,18 +49,20 @@ public class SchedulingController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-    
+
     @PostMapping("/consultations")
     public ResponseEntity<Map<String, Object>> bookConsultation(@RequestBody Map<String, String> requestBody) {
         String caregiverId = requestBody.get("caregiverId");
         String pacilianId = requestBody.get("pacilianId");
-        String schedule = requestBody.get("schedule");
+        LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime"), formatter);
+        LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime"), formatter);
+        
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Booking consultation: caregiver={}, pacilian={}, schedule={}",
-                caregiverId, pacilianId, schedule);
+        log.info("Booking consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
+                caregiverId, pacilianId, startTime, endTime);
         
-        boolean result = schedulingService.bookConsultation(caregiverId, pacilianId, schedule);
+        boolean result = schedulingService.bookConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime);
         
         if (result) {
             response.put("success", true);
@@ -67,18 +75,22 @@ public class SchedulingController {
         }
     }
     
-    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}/accept")
+    @PutMapping("/consultations/{caregiverId}/{pacilianId}/accept")
     public ResponseEntity<Map<String, Object>> acceptConsultation(
             @PathVariable String caregiverId,
             @PathVariable String pacilianId,
-            @PathVariable String schedule) {
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
         
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Accepting consultation: caregiver={}, pacilian={}, schedule={}",
-                caregiverId, pacilianId, schedule);
+        log.info("Accepting consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
+                caregiverId, pacilianId, startTime, endTime);
         
-        boolean result = schedulingService.acceptConsultation(caregiverId, pacilianId, schedule);
+        LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+        
+        boolean result = schedulingService.acceptConsultationWithDateTime(caregiverId, pacilianId, startDateTime, endDateTime);
         
         if (result) {
             response.put("success", true);
@@ -90,19 +102,23 @@ public class SchedulingController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-    
-    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}/reject")
+
+    @PutMapping("/consultations/{caregiverId}/{pacilianId}/reject")
     public ResponseEntity<Map<String, Object>> rejectConsultation(
             @PathVariable String caregiverId,
             @PathVariable String pacilianId,
-            @PathVariable String schedule) {
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
         
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Rejecting consultation: caregiver={}, pacilian={}, schedule={}",
-                caregiverId, pacilianId, schedule);
+        log.info("Rejecting consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
+                caregiverId, pacilianId, startTime, endTime);
         
-        boolean result = schedulingService.rejectConsultation(caregiverId, pacilianId, schedule);
+        LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+        
+        boolean result = schedulingService.rejectConsultationWithDateTime(caregiverId, pacilianId, startDateTime, endDateTime);
         
         if (result) {
             response.put("success", true);
@@ -115,44 +131,31 @@ public class SchedulingController {
         }
     }
     
-    @PutMapping("/consultations/{caregiverId}/{pacilianId}/{schedule}")
-    public ResponseEntity<Map<String, Object>> modifyConsultation(
-            @PathVariable String caregiverId,
-            @PathVariable String pacilianId, 
-            @PathVariable String schedule,
-            @RequestBody Map<String, String> requestBody) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        log.info("Modifying consultation: caregiver={}, pacilian={}, schedule={}",
-                caregiverId, pacilianId, schedule);
-        
-        boolean result = schedulingService.modifyConsultation(caregiverId, pacilianId, schedule);
-        
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Consultation modified successfully");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("success", false);
-            response.put("message", "Failed to modify consultation");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-
+    
     @GetMapping("/schedules/{caregiverId}")
     public ResponseEntity<Map<String, Object>> getCaregiverSchedules(@PathVariable String caregiverId) {
         log.info("Getting schedules for caregiver {}", caregiverId);
         
-        List<String> schedules = schedulingService.getCaregiverSchedules(caregiverId);
         Map<String, Object> response = new HashMap<>();
         
-        response.put("success", true);
-        response.put("schedules", schedules);
-        
-        return ResponseEntity.ok(response);
+        try {
+            // Use our new service method to get formatted schedules directly
+            List<Map<String, Object>> formattedSchedules = schedulingService.getCaregiverSchedulesFormatted(caregiverId);
+            
+            log.info("Found {} schedules for caregiver {}", formattedSchedules.size(), caregiverId);
+            
+            response.put("success", true);
+            response.put("schedules", formattedSchedules);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error getting caregiver schedules", e);
+            response.put("success", false);
+            response.put("message", "Error retrieving schedules: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
-
+    
     @GetMapping("/consultations/caregiver/{caregiverId}")
     public ResponseEntity<Map<String, Object>> getCaregiverConsultations(@PathVariable String caregiverId) {
         log.info("Getting consultations for caregiver {}", caregiverId);
@@ -165,7 +168,7 @@ public class SchedulingController {
         
         return ResponseEntity.ok(response);
     }
-
+    
     @GetMapping("/consultations/patient/{pacilianId}")
     public ResponseEntity<Map<String, Object>> getPatientConsultations(@PathVariable String pacilianId) {
         log.info("Getting consultations for patient {}", pacilianId);
@@ -179,41 +182,54 @@ public class SchedulingController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/schedule/{caregiverId}/{schedule}")
+    @DeleteMapping("/schedule/{caregiverId}")
     public ResponseEntity<Map<String, Object>> deleteSchedule(
-            @PathVariable String caregiverId, 
-            @PathVariable String schedule) {
+            @PathVariable String caregiverId,
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
         
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Deleting schedule for caregiver {}: {}", caregiverId, schedule);
-        
-        boolean result = schedulingService.deleteSchedule(caregiverId, schedule);
-        
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Schedule deleted successfully");
+        try {
+            LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
+            LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+            
+            boolean result = schedulingService.deleteScheduleWithDateTime(
+                    caregiverId, startDateTime, endDateTime);
+            
+            if (result) {
+                response.put("success", true);
+                response.put("message", "Schedule deleted successfully");
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to delete schedule");
+            }
+            
             return ResponseEntity.ok(response);
-        } else {
+        } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Failed to delete schedule");
+            response.put("message", "Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
-
-    @PutMapping("/schedule/{caregiverId}/{oldSchedule}")
+    
+    @PutMapping("/schedule/{caregiverId}")
     public ResponseEntity<Map<String, Object>> modifySchedule(
-            @PathVariable String caregiverId,
-            @PathVariable String oldSchedule,
             @RequestBody Map<String, String> requestBody) {
         
-        String newSchedule = requestBody.get("newSchedule");
+        String caregiverId = requestBody.get("caregiverId");
+        LocalDateTime oldStartTime = LocalDateTime.parse(requestBody.get("oldStartTime"), formatter);
+        LocalDateTime oldEndTime = LocalDateTime.parse(requestBody.get("oldEndTime"), formatter);
+        LocalDateTime newStartTime = LocalDateTime.parse(requestBody.get("newStartTime"), formatter);
+        LocalDateTime newEndTime = LocalDateTime.parse(requestBody.get("newEndTime"), formatter);
+        
         Map<String, Object> response = new HashMap<>();
         
-        log.info("Modifying schedule for caregiver {}: {} -> {}", 
-                caregiverId, oldSchedule, newSchedule);
+        log.info("Modifying schedule with date time for caregiver {}: {} to {} -> {} to {}", 
+                caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
         
-        boolean result = schedulingService.modifySchedule(caregiverId, oldSchedule, newSchedule);
+        boolean result = schedulingService.modifyScheduleWithDateTime(
+                caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
         
         if (result) {
             response.put("success", true);
@@ -222,6 +238,38 @@ public class SchedulingController {
         } else {
             response.put("success", false);
             response.put("message", "Failed to modify schedule");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+    
+
+
+    @GetMapping("/caregivers/available")
+    public ResponseEntity<Map<String, Object>> findAvailableCaregivers(
+            @RequestParam String startTime,
+            @RequestParam String endTime,
+            @RequestParam(required = false) String specialty) {
+        
+        log.info("Finding available caregivers for startTime={}, endTime={}, specialty={}", 
+                startTime, endTime, specialty);
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            LocalDateTime startDateTime = LocalDateTime.parse(startTime);
+            LocalDateTime endDateTime = LocalDateTime.parse(endTime);
+            
+            List<Map<String, Object>> availableCaregivers = 
+                    schedulingService.findAvailableCaregivers(startDateTime, endDateTime, specialty);
+            
+            response.put("success", true);
+            response.put("caregivers", availableCaregivers);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error finding available caregivers", e);
+            response.put("success", false);
+            response.put("message", "Error finding available caregivers: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }

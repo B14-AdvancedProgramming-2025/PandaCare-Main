@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,5 +58,27 @@ public class DefaultCaregiverRepositoryAdapterTest {
         
         assertEquals(caregiver, result);
         verify(caregiverRepository).save(caregiver);
+    }
+
+    @Test
+    public void testFindAll() {
+        List<Caregiver> caregivers = new ArrayList<>();
+        caregivers.add(new Caregiver(
+                "doctor1@example.com", "password", "Dr. John", 
+                "123456789", "123 Example St", "1234567890", 
+                "General Practice", new ArrayList<>()
+        ));
+        caregivers.add(new Caregiver(
+                "doctor2@example.com", "password", "Dr. Jane", 
+                "987654321", "456 Example St", "0987654321", 
+                "Pediatrics", new ArrayList<>()
+        ));
+        
+        when(caregiverRepository.findAll()).thenReturn(caregivers);
+        
+        List<Caregiver> result = adapter.findAll();
+        
+        assertEquals(2, result.size());
+        verify(caregiverRepository).findAll();
     }
 }

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,27 +27,29 @@ public class ConsultationService {
     }
     
     @Transactional
-    public boolean saveConsultation(String caregiverId, String pacilianId, String scheduleTime, String status) {
+    public boolean saveConsultationWithDateTime(String caregiverId, String pacilianId, 
+                                            LocalDateTime startTime, LocalDateTime endTime, String status) {
         try {
             String consultationId = UUID.randomUUID().toString();
             
-            Consultation consultation = new Consultation(consultationId, caregiverId, pacilianId, scheduleTime, status);
+            Consultation consultation = new Consultation(consultationId, caregiverId, pacilianId, startTime, endTime, status);
             consultationRepository.save(consultation);
             
-            updateScheduleAvailability(caregiverId, scheduleTime, false, "BOOKED");
+            updateScheduleAvailabilityByDateTime(caregiverId, startTime, endTime, false, "BOOKED");
             
             return true;
         } catch (Exception e) {
-            log.error("Error saving consultation", e);
+            log.error("Error saving consultation with date time", e);
             return false;
         }
     }
     
     @Transactional
-    public boolean updateStatus(String caregiverId, String pacilianId, String schedule, String status) {
+    public boolean updateStatusWithDateTime(String caregiverId, String pacilianId, 
+                                        LocalDateTime startTime, LocalDateTime endTime, String status) {
         try {
             Consultation consultation = consultationRepository
-                    .findByCaregiverIdAndPacilianIdAndScheduleTime(caregiverId, pacilianId, schedule);
+                    .findByCaregiverIdAndPacilianIdAndStartTimeAndEndTime(caregiverId, pacilianId, startTime, endTime);
             
             if (consultation == null) {
                 log.error("Consultation not found");
@@ -57,23 +60,24 @@ public class ConsultationService {
             consultationRepository.save(consultation);
 
             if ("REJECTED".equals(status)) {
-                updateScheduleAvailability(caregiverId, schedule, true, "AVAILABLE");
+                updateScheduleAvailabilityByDateTime(caregiverId, startTime, endTime, true, "AVAILABLE");
             }
             
             return true;
         } catch (Exception e) {
-            log.error("Error updating consultation status", e);
+            log.error("Error updating consultation status with date time", e);
             return false;
         }
     }
-    
-    private boolean updateScheduleAvailability(String caregiverId, String scheduleTime, boolean isAvailable, String status) {
+
+    private boolean updateScheduleAvailabilityByDateTime(String caregiverId, LocalDateTime startTime, 
+                                                    LocalDateTime endTime, boolean isAvailable, String status) {
         try {
-            int updatedRows = workingScheduleRepository.updateAvailability(
-                    caregiverId, scheduleTime, isAvailable, status);
+            int updatedRows = workingScheduleRepository.updateAvailabilityByDateTime(
+                    caregiverId, startTime, endTime, isAvailable, status);
             return updatedRows > 0;
         } catch (Exception e) {
-            log.error("Error updating schedule availability", e);
+            log.error("Error updating schedule availability by date time", e);
             return false;
         }
     }
@@ -87,7 +91,10 @@ public class ConsultationService {
     }
 
     @Transactional
-    public boolean updateConsultationSchedule(String consultationId, String newScheduleTime, String newStatus) {
+    public boolean updateConsultationScheduleWithDateTime(String consultationId, 
+                                                    LocalDateTime newStartTime, 
+                                                    LocalDateTime newEndTime, 
+                                                    String newStatus) {
         try {
             Optional<Consultation> optConsultation = consultationRepository.findById(consultationId);
             
@@ -97,7 +104,8 @@ public class ConsultationService {
             }
             
             Consultation consultation = optConsultation.get();
-            consultation.setScheduleTime(newScheduleTime);
+            consultation.setStartTime(newStartTime);
+            consultation.setEndTime(newEndTime);
             consultation.setStatus(newStatus);
             consultationRepository.save(consultation);
             

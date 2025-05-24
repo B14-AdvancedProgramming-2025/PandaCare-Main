@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,68 +24,45 @@ public class WorkingScheduleRepositoryTest {
     }
     
     @Test
-    public void testFindByCaregiverIdAndSchedule() {
+    public void testFindByCaregiverIdAndDateRange() {
         // Setup test data
         WorkingSchedule schedule = new WorkingSchedule();
         schedule.setId(1L);
         schedule.setCaregiverId("C001");
-        schedule.setSchedule("Monday 10:00-12:00");
+        schedule.setStartTime(LocalDateTime.of(2025, 6, 15, 10, 0));
+        schedule.setEndTime(LocalDateTime.of(2025, 6, 15, 12, 0));
         schedule.setStatus("AVAILABLE");
         schedule.setAvailable(true);
         
-        when(repository.findByCaregiverIdAndSchedule("C001", "Monday 10:00-12:00"))
-            .thenReturn(Optional.of(schedule));
+        LocalDateTime start = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 6, 15, 12, 0);
+        
+        when(repository.findByCaregiverIdAndStartTimeBetween("C001", start, end))
+            .thenReturn(Arrays.asList(schedule));
         
         // Execute the method being tested
-        Optional<WorkingSchedule> result = repository.findByCaregiverIdAndSchedule("C001", "Monday 10:00-12:00");
+        List<WorkingSchedule> results = repository.findByCaregiverIdAndStartTimeBetween("C001", start, end);
         
         // Verify the results
-        assertTrue(result.isPresent());
-        assertEquals(schedule, result.get());
-        verify(repository).findByCaregiverIdAndSchedule("C001", "Monday 10:00-12:00");
+        assertFalse(results.isEmpty());
+        assertEquals(1, results.size());
+        assertEquals(schedule, results.get(0));
+        verify(repository).findByCaregiverIdAndStartTimeBetween("C001", start, end);
     }
     
     @Test
-    public void testFindByCaregiverId() {
-        // Setup test data
-        WorkingSchedule schedule1 = new WorkingSchedule();
-        schedule1.setId(1L);
-        schedule1.setCaregiverId("C001");
-        schedule1.setSchedule("Monday 10:00-12:00");
-        schedule1.setStatus("AVAILABLE");
-        schedule1.setAvailable(true);
+    public void testUpdateAvailabilityWithDateTime() {
+        LocalDateTime start = LocalDateTime.of(2025, 6, 15, 10, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 6, 15, 12, 0);
         
-        WorkingSchedule schedule2 = new WorkingSchedule();
-        schedule2.setId(2L);
-        schedule2.setCaregiverId("C001");
-        schedule2.setSchedule("Tuesday 14:00-16:00");
-        schedule2.setStatus("AVAILABLE");
-        schedule2.setAvailable(true);
-        
-        List<WorkingSchedule> schedules = Arrays.asList(schedule1, schedule2);
-        
-        when(repository.findByCaregiverId("C001"))
-            .thenReturn(schedules);
-        
-        // Execute the method being tested
-        List<WorkingSchedule> result = repository.findByCaregiverId("C001");
-        
-        // Verify the results
-        assertEquals(2, result.size());
-        assertEquals(schedules, result);
-        verify(repository).findByCaregiverId("C001");
-    }
-    
-    @Test
-    public void testUpdateAvailability() {
-        when(repository.updateAvailability("C001", "Monday 10:00-12:00", false, "BOOKED"))
+        when(repository.updateAvailabilityByDateTime("C001", start, end, false, "BOOKED"))
             .thenReturn(1);
         
         // Execute the method being tested
-        int result = repository.updateAvailability("C001", "Monday 10:00-12:00", false, "BOOKED");
+        int result = repository.updateAvailabilityByDateTime("C001", start, end, false, "BOOKED");
         
         // Verify the results
         assertEquals(1, result);
-        verify(repository).updateAvailability("C001", "Monday 10:00-12:00", false, "BOOKED");
+        verify(repository).updateAvailabilityByDateTime("C001", start, end, false, "BOOKED");
     }
 }
