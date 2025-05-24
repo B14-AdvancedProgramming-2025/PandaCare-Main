@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -35,6 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        System.out.println("[JwtAuthFilter] Called: " + request.getRequestURI());
 
         String authHeader = request.getHeader("Authorization");
 
@@ -54,12 +56,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     User user = userRepository.findByEmail(email);
                     if (user != null) {
                         List<GrantedAuthority> authorities = new ArrayList<>();
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase()));
 
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 email, null, authorities
                         );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
+                        System.out.println("[JwtAuthFilter] Authentication set: " + authToken);
                     }
                 }
             }
@@ -68,4 +72,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 }

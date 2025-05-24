@@ -1,16 +1,20 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class UpdateProfileDTO {
-    private String id;
-    private String email;
-    private UserType type;
-
+    // id and nik are not updatable from DTO for profile updates
+    // email is also not updatable as per AccountServiceImpl logic
     private String name;
     private String address;
     private String phone;
+    private UserType type; // To identify if it's Pacilian or Caregiver for specific fields
 
     // Pacilian only
     private List<String> medicalHistory;
@@ -19,30 +23,8 @@ public class UpdateProfileDTO {
     private String specialty;
     private List<String> workingSchedule;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public UserType getType() { return type; }
-    public void setType(UserType type) { this.type = type; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public List<String> getMedicalHistory() { return medicalHistory; }
-    public void setMedicalHistory(List<String> medicalHistory) { this.medicalHistory = medicalHistory; }
-
-    public String getSpecialty() { return specialty; }
-    public void setSpecialty(String specialty) { this.specialty = specialty; }
-
-    public List<String> getWorkingSchedule() { return workingSchedule; }
-    public void setWorkingSchedule(List<String> workingSchedule) { this.workingSchedule = workingSchedule; }
+    // Add NIK and Email fields, but they won't be used for update, only for context if needed.
+    // These are typically path variables or part of the security context, not DTO for update.
+    private String nik; 
+    private String email;
 }
