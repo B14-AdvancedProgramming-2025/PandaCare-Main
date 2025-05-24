@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
