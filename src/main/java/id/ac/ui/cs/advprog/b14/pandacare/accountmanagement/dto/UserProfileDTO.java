@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +25,7 @@ public class UserProfileDTO {
 
     // Caregiver
     private String specialty;
-    private List<String> workingSchedule;
+    private List<WorkingScheduleDTO> workingSchedule;
 
     private List<ConsultationDTO> consultationHistory;
 }

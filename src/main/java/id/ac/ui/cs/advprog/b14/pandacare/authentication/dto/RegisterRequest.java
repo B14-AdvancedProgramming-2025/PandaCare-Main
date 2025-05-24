@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.dto;
 
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -31,5 +32,5 @@ public class RegisterRequest {
     private List<String> medicalHistory;
 
     private String specialty;
-    private List<String> workingSchedule;
+    private List<WorkingSchedule> workingSchedule;
 }

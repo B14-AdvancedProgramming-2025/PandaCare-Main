@@ -11,16 +11,15 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.TokenRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.WorkingScheduleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuthService implements AuthenticationFacade {
@@ -152,11 +151,20 @@ public class AuthService implements AuthenticationFacade {
                     request.getAddress(),
                     request.getPhone(),
                     request.getSpecialty(),
-                    request.getWorkingSchedule()
+                    new ArrayList<>()
+//                    request.getWorkingSchedule()
             );
             caregiver.setType(UserType.CAREGIVER);
 
             Caregiver savedUser = userRepository.save(caregiver);
+
+            List<WorkingSchedule>  workingSchedule = new ArrayList<>();
+            for (WorkingSchedule schedule : request.getWorkingSchedule()) {
+                schedule.setCaregiverId(savedUser.getId());
+                workingSchedule.add(schedule);
+            }
+            savedUser.setWorkingSchedule(workingSchedule);
+            userRepository.save(savedUser);
 
             response.put("success", true);
             response.put("message", "Registration successful");

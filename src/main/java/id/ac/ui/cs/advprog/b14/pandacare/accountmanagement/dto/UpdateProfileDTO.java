@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,7 +22,7 @@ public class UpdateProfileDTO {
 
     // Caregiver only
     private String specialty;
-    private List<String> workingSchedule;
+    private List<WorkingSchedule> workingSchedule;
 
     // Add NIK and Email fields, but they won't be used for update, only for context if needed.
     // These are typically path variables or part of the security context, not DTO for update.

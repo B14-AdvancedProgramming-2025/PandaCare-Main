@@ -3,12 +3,14 @@ package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.ConsultationDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UpdateProfileDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UserProfileDTO;
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.WorkingScheduleDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.*;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.CaregiverRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.PacilianRepository;
 // Import Consultation model and repository (assuming they exist)
 // import id.ac.ui.cs.advprog.b14.pandacare.consultation.model.Consultation;
 // import id.ac.ui.cs.advprog.b14.pandacare.consultation.repository.ConsultationRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -106,8 +108,13 @@ public class AccountServiceImpl implements AccountService {
         } else if (user instanceof Caregiver caregiver) {
             builder.specialty(caregiver.getSpecialty());
             builder.workingSchedule(
-                    caregiver.getWorkingSchedule() != null ? caregiver.getWorkingSchedule() : Collections.emptyList()
+                    caregiver.getWorkingSchedule() != null ?
+                            caregiver.getWorkingSchedule().stream()
+                                    .map(WorkingScheduleDTO::fromEntity)
+                                    .collect(Collectors.toList())
+                            : Collections.emptyList()
             );
+
         }
 
         builder.consultationHistory(Collections.emptyList()); // Belum ada implementasi real
