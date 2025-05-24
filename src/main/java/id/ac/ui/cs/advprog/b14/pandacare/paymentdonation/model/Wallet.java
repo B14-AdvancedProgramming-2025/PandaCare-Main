@@ -15,6 +15,7 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Double balance = 0.0;
 
     @OneToOne
