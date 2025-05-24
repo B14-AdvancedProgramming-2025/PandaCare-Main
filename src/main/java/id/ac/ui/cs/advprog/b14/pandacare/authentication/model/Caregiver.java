@@ -20,8 +20,8 @@ public class Caregiver extends User {
 
     protected Caregiver() {}
 
-    public Caregiver(String email, String password, String name, String nik, String address, String phone, String specialty, List<String> workingSchedule) {
-        super(email, password, name, nik, address, phone);
+    public Caregiver(String id, String email, String password, String name, String nik, String address, String phone, String specialty, List<String> workingSchedule) {
+        super(id, email, password, name, nik, address, phone, UserType.CAREGIVER);
         this.specialty = specialty;
         this.workingSchedule = workingSchedule;
     }
