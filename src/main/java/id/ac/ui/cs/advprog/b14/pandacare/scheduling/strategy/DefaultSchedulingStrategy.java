@@ -51,8 +51,8 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     }
 
     @Override
-    public List<Consultation> getPatientConsultations(String pacilianId) {
-        log.info("Getting consultations for patient {}", pacilianId);
+    public List<Consultation> getPacilianConsultations(String pacilianId) {
+        log.info("Getting consultations for pacilian {}", pacilianId);
         return consultationService.findConsultationsByPacilianId(pacilianId);
     }
 
@@ -72,7 +72,7 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     @Override
     public boolean bookConsultationWithDateTime(String caregiverId, String pacilianId, 
                                             LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("Booking consultation for caregiver {} with patient {}: {} to {}", 
+        log.info("Booking consultation for caregiver {} with pacilian {}: {} to {}", 
                 caregiverId, pacilianId, startTime, endTime);
         
         // Check if the schedule is available
@@ -88,7 +88,7 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     @Override
     public boolean updateConsultationStatusWithDateTime(String caregiverId, String pacilianId, 
                                                     LocalDateTime startTime, LocalDateTime endTime, String status) {
-        log.info("Updating consultation status for caregiver {} with patient {}: {} to {} -> {}", 
+        log.info("Updating consultation status for caregiver {} with pacilian {}: {} to {} -> {}", 
                 caregiverId, pacilianId, startTime, endTime, status);
         return consultationService.updateStatusWithDateTime(caregiverId, pacilianId, startTime, endTime, status);
     }

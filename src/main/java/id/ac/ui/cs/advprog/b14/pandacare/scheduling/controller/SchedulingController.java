@@ -1,437 +1,541 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.controller;
 
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.SchedulingService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal; 
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.security.core.Authentication;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/scheduling")
 public class SchedulingController {
 
     private static final Logger log = LoggerFactory.getLogger(SchedulingController.class);
-    private final SchedulingService schedulingService;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private final UserRepository userRepository;
+    private final SchedulingService asyncSchedulingService;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    
+    public SchedulingController(SchedulingService asyncSchedulingService) { 
+        this.asyncSchedulingService = asyncSchedulingService;
+    }
+    
+    @GetMapping("/caregiver/consultations")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> getCaregiverConsultationsAsync(
+            @AuthenticationPrincipal User user) { 
+        log.info("Entering getCaregiverConsultationsAsync. Authenticated user: {}", (user != null ? user.getEmail() : "null"));
+        
+        Map<String, Object> responseMap = new HashMap<>(); 
 
-    public SchedulingController(SchedulingService schedulingService, UserRepository userRepository) {
-        this.schedulingService = schedulingService;
-        this.userRepository = userRepository;
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for getCaregiverConsultationsAsync.");
+            responseMap.put("success", false);
+            responseMap.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseMap));
+        }
+        
+        log.info("User found via @AuthenticationPrincipal: ID={}, Email={}, Type={}", user.getId(), user.getEmail(), user.getType());
+
+        if (user.getType() != UserType.CAREGIVER) {
+            log.warn("Access denied for getCaregiverConsultationsAsync. User ID: {}, User Type: {}. Expected CAREGIVER.", user.getId(), user.getType());
+            responseMap.put("success", false);
+            responseMap.put("message", "Only caregivers can access caregiver consultations");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseMap));
+        }
+        
+        String caregiverId = user.getId(); 
+        log.info("Getting consultations asynchronously for caregiver: {}", caregiverId);
+        
+        return asyncSchedulingService.getCaregiverConsultationsAsync(caregiverId)
+                .thenApply(consultations -> {
+                    responseMap.put("success", true);
+                    responseMap.put("consultations", consultations);
+                    return ResponseEntity.ok(responseMap);
+                })
+                .exceptionally(ex -> {
+                    log.error("Error getting caregiver consultations for caregiverId {}: {}", caregiverId, ex.getMessage(), ex);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "Failed to get consultations: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseMap);
+                });
+    }
+    
+    @GetMapping("/pacilian/consultations")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> getPacilianConsultationsAsync(
+            @AuthenticationPrincipal User user) { 
+        
+        Map<String, Object> response = new HashMap<>(); 
+
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for getPacilianConsultationsAsync.");
+            response.put("success", false);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
+        }
+        
+        if (user.getType() != UserType.PACILIAN) {
+            response.put("success", false);
+            response.put("message", "Only pacilians can access pacilian consultations");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
+        }
+        
+        String pacilianId = user.getId();
+        
+        log.info("Getting consultations asynchronously for pacilian: {}", pacilianId);
+        
+        return asyncSchedulingService.getPacilianConsultationsAsync(pacilianId)
+                .thenApply(consultations -> {
+                    response.put("success", true);
+                    response.put("consultations", consultations);
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(ex -> {
+                    log.error("Error getting pacilian consultations", ex);
+                    response.put("success", false);
+                    response.put("message", "Failed to get consultations: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                });
     }
 
-    @PostMapping("/schedule")
-    public ResponseEntity<Map<String, Object>> createSchedule(@
-            RequestBody Map<String, String> requestBody,
-            Authentication authentication) {
+    @PostMapping("/pacilian/consultations")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> bookConsultationAsync(
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal User user) { 
         
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
         Map<String, Object> response = new HashMap<>();
 
-        if (user == null || user.getType() != UserType.CAREGIVER) {
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for bookConsultationAsync.");
             response.put("success", false);
-            response.put("message", "Only caregivers can create schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
         }
-
-        String caregiverId = user.getId();
-        LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime"), formatter);
-        LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime"), formatter);
         
-        log.info("Creating schedule with date time: caregiver={}, startTime={}, endTime={}", 
-                caregiverId, startTime, endTime);
-        
-        boolean result = schedulingService.createScheduleWithDateTime(caregiverId, startTime, endTime);
-        
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Schedule created successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } else {
+        if (user.getType() != UserType.PACILIAN) {
             response.put("success", false);
-            response.put("message", "Failed to create schedule");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            response.put("message", "Only pacilians can book consultations");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
         }
-    }
-
-    @PostMapping("/consultations")
-    public ResponseEntity<Map<String, Object>> bookConsultation(
-        @RequestBody Map<String, String> requestBody,
-            Authentication authentication) {
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        if (user == null || user.getType() != UserType.PACILIAN) {
-            response.put("success", false);
-            response.put("message", "Only patients can book consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
+        
         String pacilianId = user.getId();
         String caregiverId = requestBody.get("caregiverId");
         LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime"), formatter);
         LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime"), formatter);
         
-        log.info("Booking consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
+        log.info("Booking consultation asynchronously: caregiver={}, pacilian={}, startTime={}, endTime={}",
                 caregiverId, pacilianId, startTime, endTime);
         
-        boolean result = schedulingService.bookConsultationWithDateTime(caregiverId, pacilianId, startTime, endTime);
-        
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Consultation booked successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } else {
-            response.put("success", false);
-            response.put("message", "Failed to book consultation");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        return asyncSchedulingService.bookConsultationWithDateTimeAsync(caregiverId, pacilianId, startTime, endTime)
+                .thenApply(result -> {
+                    if (result) {
+                        response.put("success", true);
+                        response.put("message", "Consultation booked successfully");
+                        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "Failed to book consultation");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("Error booking consultation", ex);
+                    response.put("success", false);
+                    response.put("message", "Failed to book consultation: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                });
     }
-    
-    @PutMapping("/consultations/{caregiverId}/{pacilianId}/accept")
-    public ResponseEntity<Map<String, Object>> acceptConsultation(
-            @PathVariable String caregiverId,
-            @PathVariable String pacilianId,
-            @RequestParam String startTime,
-            @RequestParam String endTime,
-            Authentication authentication) {
-        
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
 
-        if (user == null || user.getType() != UserType.CAREGIVER) {
+    @PutMapping("/caregiver/consultations/accept")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> acceptConsultationAsync(
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal User user) { 
+        
+        Map<String, Object> response = new HashMap<>(); 
+
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for acceptConsultationAsync.");
+            response.put("success", false);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
+        }
+        
+        if (user.getType() != UserType.CAREGIVER) {
             response.put("success", false);
             response.put("message", "Only caregivers can accept consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        // Verify the caregiver is accepting their own consultation
-        if (!user.getId().equals(caregiverId)) {
-            response.put("success", false);
-            response.put("message", "You can only accept your own consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
         }
         
-        log.info("Accepting consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
-                caregiverId, pacilianId, startTime, endTime);
+        String caregiverId = user.getId();
+        String pacilianId = requestBody.get("pacilianId");
+        String startTime = requestBody.get("startTime");
+        String endTime = requestBody.get("endTime");
         
         LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
         LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
         
-        boolean result = schedulingService.acceptConsultationWithDateTime(caregiverId, pacilianId, startDateTime, endDateTime);
+        log.info("Accepting consultation asynchronously: caregiver={}, pacilian={}, startTime={}, endTime={}",
+                caregiverId, pacilianId, startDateTime, endDateTime);
         
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Consultation accepted successfully");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("success", false);
-            response.put("message", "Failed to accept consultation");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+        return asyncSchedulingService.acceptConsultationWithDateTimeAsync(caregiverId, pacilianId, startDateTime, endDateTime)
+                .thenApply(result -> {
+                    if (result) {
+                        response.put("success", true);
+                        response.put("message", "Consultation accepted successfully");
+                        return ResponseEntity.ok(response);
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "Failed to accept consultation");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("Error accepting consultation", ex);
+                    response.put("success", false);
+                    response.put("message", "Failed to accept consultation: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                });
     }
 
-    @PutMapping("/consultations/{caregiverId}/{pacilianId}/reject")
-    public ResponseEntity<Map<String, Object>> rejectConsultation(
-            @PathVariable String caregiverId,
-            @PathVariable String pacilianId,
-            @RequestParam String startTime,
-            @RequestParam String endTime,
-            Authentication authentication) {
+    @PutMapping("/caregiver/consultations/reject")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> rejectConsultationAsync(
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal User user) { 
         
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>(); 
 
-        if (user == null || user.getType() != UserType.CAREGIVER) {
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for rejectConsultationAsync.");
+            response.put("success", false);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
+        }
+        
+        if (user.getType() != UserType.CAREGIVER) {
             response.put("success", false);
             response.put("message", "Only caregivers can reject consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
         }
         
-        // Verify the caregiver is rejecting their own consultation
-        if (!user.getId().equals(caregiverId)) {
-            response.put("success", false);
-            response.put("message", "You can only reject your own consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-        
-        log.info("Rejecting consultation with date time: caregiver={}, pacilian={}, startTime={}, endTime={}",
-                caregiverId, pacilianId, startTime, endTime);
+        String caregiverId = user.getId();
+        String pacilianId = requestBody.get("pacilianId");
+        String startTime = requestBody.get("startTime");
+        String endTime = requestBody.get("endTime");
         
         LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
         LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
         
-        boolean result = schedulingService.rejectConsultationWithDateTime(caregiverId, pacilianId, startDateTime, endDateTime);
+        log.info("Rejecting consultation asynchronously: caregiver={}, pacilian={}, startTime={}, endTime={}",
+                caregiverId, pacilianId, startDateTime, endDateTime);
         
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Consultation rejected successfully");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("success", false);
-            response.put("message", "Failed to reject consultation");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-    
-    
-    @GetMapping("/schedules/{caregiverId}")
-    public ResponseEntity<Map<String, Object>> getCaregiverSchedules(
-        @PathVariable String caregiverId,
-        Authentication authentication) {
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        // Allow both caregiver (to see their own) and patients (to see any caregiver's schedule)
-        if (user == null) {
-            response.put("success", false);
-            response.put("message", "Authentication required");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-        
-        // If user is a caregiver, they can only view their own schedule
-        if (user.getType() == UserType.CAREGIVER && !user.getId().equals(caregiverId)) {
-            response.put("success", false);
-            response.put("message", "You can only view your own schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        log.info("Getting schedules for caregiver {}", caregiverId);
-        
-        try {
-            List<Map<String, Object>> formattedSchedules = schedulingService.getCaregiverSchedulesFormatted(caregiverId);
-            
-            log.info("Found {} schedules for caregiver {}", formattedSchedules.size(), caregiverId);
-            
-            response.put("success", true);
-            response.put("schedules", formattedSchedules);
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error getting caregiver schedules", e);
-            response.put("success", false);
-            response.put("message", "Error retrieving schedules: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    @GetMapping("/consultations/caregiver/{caregiverId}")
-    public ResponseEntity<Map<String, Object>> getCaregiverConsultations(
-        @PathVariable String caregiverId,
-        Authentication authentication) {
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        if (user == null || user.getType() != UserType.CAREGIVER) {
-            response.put("success", false);
-            response.put("message", "Only caregivers can access caregiver consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-        
-        // Verify caregiver is accessing their own consultations
-        if (!user.getId().equals(caregiverId)) {
-            response.put("success", false);
-            response.put("message", "You can only view your own consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        log.info("Getting consultations for caregiver {}", caregiverId);
-        
-        List<Consultation> consultations = schedulingService.getCaregiverConsultations(caregiverId);
-        
-        response.put("success", true);
-        response.put("consultations", consultations);
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/consultations/patient/{pacilianId}")
-    public ResponseEntity<Map<String, Object>> getPatientConsultations(
-        @PathVariable String pacilianId,
-        Authentication authentication) {
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        if (user == null || user.getType() != UserType.PACILIAN) {
-            response.put("success", false);
-            response.put("message", "Only patients can access patient consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-        
-        // Verify patient is accessing their own consultations
-        if (!user.getId().equals(pacilianId)) {
-            response.put("success", false);
-            response.put("message", "You can only view your own consultations");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        log.info("Getting consultations for patient {}", pacilianId);
-        
-        List<Consultation> consultations = schedulingService.getPatientConsultations(pacilianId);
-        
-        response.put("success", true);
-        response.put("consultations", consultations);
-        
-        return ResponseEntity.ok(response);
+        return asyncSchedulingService.rejectConsultationWithDateTimeAsync(caregiverId, pacilianId, startDateTime, endDateTime)
+                .thenApply(result -> {
+                    if (result) {
+                        response.put("success", true);
+                        response.put("message", "Consultation rejected successfully");
+                        return ResponseEntity.ok(response);
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "Failed to reject consultation");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("Error rejecting consultation", ex);
+                    response.put("success", false);
+                    response.put("message", "Failed to reject consultation: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                });
     }
 
-    @DeleteMapping("/schedule/{caregiverId}")
-    public ResponseEntity<Map<String, Object>> deleteSchedule(
-            @PathVariable String caregiverId,
-            @RequestParam String startTime,
-            @RequestParam String endTime,
-            Authentication authentication) {
-        
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
-
-        if (user == null || user.getType() != UserType.CAREGIVER) {
-            response.put("success", false);
-            response.put("message", "Only caregivers can delete schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-        
-        // Verify caregiver is deleting their own schedule
-        if (!user.getId().equals(caregiverId)) {
-            response.put("success", false);
-            response.put("message", "You can only delete your own schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-        
-        try {
-            LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
-            LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
-            
-            boolean result = schedulingService.deleteScheduleWithDateTime(
-                    caregiverId, startDateTime, endDateTime);
-            
-            if (result) {
-                response.put("success", true);
-                response.put("message", "Schedule deleted successfully");
-            } else {
-                response.put("success", false);
-                response.put("message", "Failed to delete schedule");
-            }
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
     
-    @PutMapping("/schedule/{caregiverId}")
-    public ResponseEntity<Map<String, Object>> modifySchedule(
+    @PostMapping("/caregiver/schedules")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> createScheduleAsync(
             @RequestBody Map<String, String> requestBody,
-            Authentication authentication) {
+            @AuthenticationPrincipal User user) { 
+        log.info("Entering createScheduleAsync. Authenticated user: {}", (user != null ? user.getEmail() : "null"));
+        
+        Map<String, Object> responseMap = new HashMap<>(); 
 
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for createScheduleAsync.");
+            responseMap.put("success", false);
+            responseMap.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseMap));
+        }
 
-        if (user == null || user.getType() != UserType.CAREGIVER) {
-            response.put("success", false);
-            response.put("message", "Only caregivers can modify schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        log.info("User found via @AuthenticationPrincipal: ID={}, Email={}, Type={}", user.getId(), user.getEmail(), user.getType());
+        
+        if (user.getType() != UserType.CAREGIVER) {
+            log.warn("Access denied for createScheduleAsync. User ID: {}, User Type: {}. Expected CAREGIVER.", user.getId(), user.getType());
+            responseMap.put("success", false);
+            responseMap.put("message", "Only caregivers can create schedules");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseMap));
         }
         
         String caregiverId = user.getId();
         
-        // Verify caregiverId in request matches authenticated user
-        if (!caregiverId.equals(requestBody.get("caregiverId"))) {
-            response.put("success", false);
-            response.put("message", "You can only modify your own schedules");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        LocalDateTime oldStartTime = LocalDateTime.parse(requestBody.get("oldStartTime"), formatter);
-        LocalDateTime oldEndTime = LocalDateTime.parse(requestBody.get("oldEndTime"), formatter);
-        LocalDateTime newStartTime = LocalDateTime.parse(requestBody.get("newStartTime"), formatter);
-        LocalDateTime newEndTime = LocalDateTime.parse(requestBody.get("newEndTime"), formatter);
-        
-        
-        log.info("Modifying schedule with date time for caregiver {}: {} to {} -> {} to {}", 
-                caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
-        
-        boolean result = schedulingService.modifyScheduleWithDateTime(
-                caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
-        
-        if (result) {
-            response.put("success", true);
-            response.put("message", "Schedule modified successfully");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("success", false);
-            response.put("message", "Failed to modify schedule");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        try {
+            LocalDateTime startTime = LocalDateTime.parse(requestBody.get("startTime"), formatter);
+            LocalDateTime endTime = LocalDateTime.parse(requestBody.get("endTime"), formatter);
+            
+            log.info("Creating schedule asynchronously for caregiver {}: {} to {}", caregiverId, startTime, endTime);
+            
+            return asyncSchedulingService.createScheduleWithDateTimeAsync(caregiverId, startTime, endTime)
+                    .thenApply(result -> {
+                        if (result) {
+                            responseMap.put("success", true);
+                            responseMap.put("message", "Schedule created successfully");
+                            return ResponseEntity.ok(responseMap);
+                        } else {
+                            responseMap.put("success", false);
+                            responseMap.put("message", "Failed to create schedule");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseMap);
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        log.error("Error creating schedule for caregiverId {}: {}", caregiverId, ex.getMessage(), ex);
+                        responseMap.put("success", false);
+                        responseMap.put("message", "Failed to create schedule: " + ex.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseMap);
+                    });
+                
+        } catch (Exception e) {
+            log.error("Error parsing request for create schedule for caregiverId {}: {}", caregiverId, e.getMessage(), e);
+            responseMap.put("success", false);
+            responseMap.put("message", "Invalid request format: " + e.getMessage());
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(responseMap));
         }
     }
     
-
-
-    @GetMapping("/caregivers/available")
-    public ResponseEntity<Map<String, Object>> findAvailableCaregivers(
-            @RequestParam String startTime,
-            @RequestParam String endTime,
-            @RequestParam(required = false) String specialty,
-            Authentication authentication) {
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        Map<String, Object> response = new HashMap<>();
+    @PutMapping("/caregiver/schedules")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> modifyScheduleAsync(
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal User user) { 
+        
+        Map<String, Object> response = new HashMap<>(); 
 
         if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for modifyScheduleAsync.");
             response.put("success", false);
-            response.put("message", "Authentication required");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
         }
         
-        log.info("Finding available caregivers for startTime={}, endTime={}, specialty={}", 
-                startTime, endTime, specialty);
+        if (user.getType() != UserType.CAREGIVER) {
+            response.put("success", false);
+            response.put("message", "Only caregivers can modify schedules");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
+        }
+        
+        String caregiverId = user.getId();
         
         try {
-            LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
-            LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+            LocalDateTime oldStartTime = LocalDateTime.parse(requestBody.get("oldStartTime"), formatter);
+            LocalDateTime oldEndTime = LocalDateTime.parse(requestBody.get("oldEndTime"), formatter);
+            LocalDateTime newStartTime = LocalDateTime.parse(requestBody.get("newStartTime"), formatter);
+            LocalDateTime newEndTime = LocalDateTime.parse(requestBody.get("newEndTime"), formatter);
             
-            List<Map<String, Object>> availableCaregivers = 
-                    schedulingService.findAvailableCaregivers(startDateTime, endDateTime, specialty);
+            log.info("Modifying schedule asynchronously for caregiver {}: {} to {} -> {} to {}", 
+                    caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime);
             
-            response.put("success", true);
-            response.put("caregivers", availableCaregivers);
-            
-            return ResponseEntity.ok(response);
+            return asyncSchedulingService.modifyScheduleWithDateTimeAsync(
+                    caregiverId, oldStartTime, oldEndTime, newStartTime, newEndTime)
+                    .thenApply(result -> {
+                        if (result) {
+                            response.put("success", true);
+                            response.put("message", "Schedule modified successfully");
+                            return ResponseEntity.ok(response);
+                        } else {
+                            response.put("success", false);
+                            response.put("message", "Failed to modify schedule");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        log.error("Error modifying schedule", ex);
+                        response.put("success", false);
+                        response.put("message", "Failed to modify schedule: " + ex.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    });
+                
         } catch (Exception e) {
-            log.error("Error finding available caregivers", e);
+            log.error("Error parsing request", e);
             response.put("success", false);
-            response.put("message", "Error finding available caregivers: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            response.put("message", "Invalid request format: " + e.getMessage());
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(response));
+        }
+    }
+
+    @DeleteMapping("/caregiver/schedules")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> deleteScheduleAsync(
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal User user) { 
+        
+        Map<String, Object> response = new HashMap<>(); 
+
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for deleteScheduleAsync.");
+            response.put("success", false);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
+        }
+        
+        if (user.getType() != UserType.CAREGIVER) {
+            response.put("success", false);
+            response.put("message", "Only caregivers can delete schedules");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
+        }
+        
+        String caregiverId = user.getId();
+        String startTime = requestBody.get("startTime");
+        String endTime = requestBody.get("endTime");
+        
+        LocalDateTime startDateTime = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime endDateTime = LocalDateTime.parse(endTime, formatter);
+        
+        log.info("Deleting schedule asynchronously: caregiver={}, startTime={}, endTime={}",
+                caregiverId, startDateTime, endDateTime);
+        
+        return asyncSchedulingService.deleteScheduleWithDateTimeAsync(caregiverId, startDateTime, endDateTime)
+                .thenApply(result -> {
+                    if (result) {
+                        response.put("success", true);
+                        response.put("message", "Schedule deleted successfully");
+                        return ResponseEntity.ok(response);
+                    } else {
+                        response.put("success", false);
+                        response.put("message", "Failed to delete schedule");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                })
+                .exceptionally(ex -> {
+                    log.error("Error deleting schedule", ex);
+                    response.put("success", false);
+                    response.put("message", "Failed to delete schedule: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                });
+    }
+
+    @GetMapping("/caregiver/schedules")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> getCaregiverSchedulesAsync(
+            @AuthenticationPrincipal User user) { 
+        log.info("Entering getCaregiverSchedulesAsync. Authenticated user: {}", (user != null ? user.getEmail() : "null"));
+        
+        Map<String, Object> responseMap = new HashMap<>();
+
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for getCaregiverSchedulesAsync.");
+            responseMap.put("success", false);
+            responseMap.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseMap));
+        }
+
+        log.info("User found via @AuthenticationPrincipal: ID={}, Email={}, Type={}", user.getId(), user.getEmail(), user.getType());
+        
+        if (user.getType() != UserType.CAREGIVER) {
+            log.warn("Access denied for getCaregiverSchedulesAsync. User ID: {}, User Type: {}. Expected CAREGIVER.", user.getId(), user.getType());
+            responseMap.put("success", false);
+            responseMap.put("message", "Only caregivers can view their schedules this way.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseMap));
+        }
+        String caregiverId = user.getId(); 
+        
+        log.info("Getting schedules asynchronously for caregiver {}", caregiverId);
+        
+        return asyncSchedulingService.getCaregiverSchedulesFormattedAsync(caregiverId)
+                .thenApply(formattedSchedules -> {
+                    log.info("Successfully retrieved {} schedules for caregiver {}", 
+                    formattedSchedules.size(), caregiverId);
+                    responseMap.put("success", true);
+                    responseMap.put("schedules", formattedSchedules);
+                    ResponseEntity<Map<String, Object>> response = ResponseEntity.ok(responseMap);
+                    log.info("Returning response with status: {}", response.getStatusCode());
+                    return ResponseEntity.ok(responseMap);
+                })
+                .exceptionally(ex -> {
+                    log.error("Error getting caregiver schedules for caregiverId {}: {}", caregiverId, ex.getMessage(), ex);
+                    responseMap.put("success", false);
+                    responseMap.put("message", "Failed to get schedules: " + ex.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseMap);
+                });
+    }
+    
+    @GetMapping("/pacilian/available-caregivers")
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> findAvailableCaregiversAsync(
+            @RequestParam("startTime") String startTimeStr,
+            @RequestParam("endTime") String endTimeStr,
+            @RequestParam(value = "specialty", required = false) String specialty,
+            @AuthenticationPrincipal User user) { 
+        
+        Map<String, Object> response = new HashMap<>(); 
+
+        if (user == null) {
+            log.warn("User from @AuthenticationPrincipal is null for findAvailableCaregiversAsync.");
+            response.put("success", false);
+            response.put("message", "User not authenticated or not found.");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
+        }
+        
+        if (user.getType() != UserType.PACILIAN) {
+            response.put("success", false);
+            response.put("message", "Only pacilians can find available caregivers");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.status(HttpStatus.FORBIDDEN).body(response));
+        }
+        
+        try {
+            LocalDateTime startTime = LocalDateTime.parse(startTimeStr, formatter);
+            LocalDateTime endTime = LocalDateTime.parse(endTimeStr, formatter);
+            
+            log.info("Finding available caregivers asynchronously with specialty {} between {} and {}", 
+                    specialty, startTime, endTime);
+            
+            return asyncSchedulingService.findAvailableCaregiversAsync(startTime, endTime, specialty)
+                    .thenApply(caregivers -> {
+                        response.put("success", true);
+                        response.put("caregivers", caregivers);
+                        return ResponseEntity.ok(response);
+                    })
+                    .exceptionally(ex -> {
+                        log.error("Error finding available caregivers", ex);
+                        response.put("success", false);
+                        response.put("message", "Failed to find available caregivers: " + ex.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    });
+                
+        } catch (Exception e) {
+            log.error("Error parsing request", e);
+            response.put("success", false);
+            response.put("message", "Invalid request format: " + e.getMessage());
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(response));
         }
     }
 }

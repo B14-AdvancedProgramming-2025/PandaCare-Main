@@ -32,12 +32,12 @@ public class SchedulingContext {
         return strategy.getCaregiverConsultations(caregiverId);
     }
 
-    public List<Consultation> getPatientConsultations(String pacilianId) {
+    public List<Consultation> getPacilianConsultations(String pacilianId) {
         if (strategy == null) {
             log.error("No scheduling strategy set");
             return new ArrayList<>();
         }
-        return strategy.getPatientConsultations(pacilianId);
+        return strategy.getPacilianConsultations(pacilianId);
     }
 
     public boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {
