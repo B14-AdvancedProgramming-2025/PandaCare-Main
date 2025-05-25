@@ -69,4 +69,45 @@ public class AsyncSchedulingService {
         List<Map<String, Object>> caregivers = context.findAvailableCaregivers(startTime, endTime, specialty);
         return CompletableFuture.completedFuture(caregivers);
     }
+
+    @Async("schedulingTaskExecutor")
+    public CompletableFuture<List<Map<String, Object>>> getCaregiverSchedulesFormattedAsync(String caregiverId) {
+        log.info("Asynchronously fetching formatted schedules for caregiver: {}", caregiverId);
+        List<Map<String, Object>> formattedSchedules = context.getCaregiverSchedulesFormatted(caregiverId);
+        return CompletableFuture.completedFuture(formattedSchedules);
+    }
+
+    @Async("schedulingTaskExecutor")
+    public CompletableFuture<Boolean> deleteScheduleWithDateTimeAsync(String caregiverId, 
+                                                    LocalDateTime startTime, 
+                                                    LocalDateTime endTime) {
+        log.info("Asynchronously deleting schedule for caregiver {}: {} to {}", 
+                caregiverId, startTime, endTime);
+        boolean result = context.deleteScheduleWithDateTime(caregiverId, startTime, endTime);
+        return CompletableFuture.completedFuture(result);
+    }
+
+    @Async("schedulingTaskExecutor")
+    public CompletableFuture<Boolean> acceptConsultationWithDateTimeAsync(String caregiverId, 
+                                                        String pacilianId, 
+                                                        LocalDateTime startTime, 
+                                                        LocalDateTime endTime) {
+        log.info("Asynchronously accepting consultation for patient {} with caregiver {}: {} to {}", 
+                pacilianId, caregiverId, startTime, endTime);
+        boolean result = context.updateConsultationStatusWithDateTime(
+            caregiverId, pacilianId, startTime, endTime, "ACCEPTED");
+        return CompletableFuture.completedFuture(result);
+    }
+
+    @Async("schedulingTaskExecutor")
+    public CompletableFuture<Boolean> rejectConsultationWithDateTimeAsync(String caregiverId, 
+                                                        String pacilianId, 
+                                                        LocalDateTime startTime, 
+                                                        LocalDateTime endTime) {
+        log.info("Asynchronously rejecting consultation for patient {} with caregiver {}: {} to {}", 
+                pacilianId, caregiverId, startTime, endTime);
+        boolean result = context.updateConsultationStatusWithDateTime(
+            caregiverId, pacilianId, startTime, endTime, "REJECTED");
+        return CompletableFuture.completedFuture(result);
+    }
 }

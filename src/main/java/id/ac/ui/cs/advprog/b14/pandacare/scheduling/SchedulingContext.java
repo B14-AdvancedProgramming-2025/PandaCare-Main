@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling;
 
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 

@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,7 +28,7 @@ public class WorkingScheduleRepositoryTest {
     public void testFindByCaregiverIdAndDateRange() {
         // Setup test data
         WorkingSchedule schedule = new WorkingSchedule();
-        schedule.setId(1L);
+        schedule.setId(UUID.randomUUID().toString());
         schedule.setCaregiverId("C001");
         schedule.setStartTime(LocalDateTime.of(2025, 6, 15, 10, 0));
         schedule.setEndTime(LocalDateTime.of(2025, 6, 15, 12, 0));

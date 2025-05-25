@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface WorkingScheduleRepository extends JpaRepository<WorkingSchedule, Long> {
+public interface WorkingScheduleRepository extends JpaRepository<WorkingSchedule, String> {
     List<WorkingSchedule> findByCaregiverId(String caregiverId);
 
     List<WorkingSchedule> findByCaregiverIdAndStartTimeBetween(String caregiverId, LocalDateTime startTime, LocalDateTime endTime);

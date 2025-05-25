@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,7 +40,7 @@ public class CaregiverScheduleRepositoryTest {
     public void testSaveScheduleWithDateTime() {
         // Create caregiver with empty schedule list
         Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
+                "1", "doctor@example.com", "password", "Dr. Example", 
                 "123456789", "123 Example St", "1234567890", 
                 "General Practice", new ArrayList<>()
         );
@@ -70,7 +71,7 @@ public class CaregiverScheduleRepositoryTest {
     public void testSaveScheduleWithDateTimeOverlap() {
         // Setup - caregiver with existing overlapping schedule
         Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
+                "1","doctor@example.com", "password", "Dr. Example", 
                 "123456789", "123 Example St", "1234567890", 
                 "General Practice", new ArrayList<>()
         );
@@ -80,7 +81,7 @@ public class CaregiverScheduleRepositoryTest {
         
         // Create a list of existing schedules in DateTime format
         when(workingScheduleRepository.findByCaregiverId("C001")).thenReturn(
-            List.of(new WorkingSchedule(1L, "C001", existingStart, existingEnd, "AVAILABLE", true))
+            List.of(new WorkingSchedule(UUID.randomUUID().toString(), "C001", existingStart, existingEnd, "AVAILABLE", true))
         );
         
         when(caregiverAdapter.findById("C001")).thenReturn(Optional.of(caregiver));
@@ -109,16 +110,17 @@ public class CaregiverScheduleRepositoryTest {
         schedule.setStartTime(startTime);
         schedule.setEndTime(endTime);
         schedule.setAvailable(true);
+        schedule.setStatus("AVAILABLE");
         
-        when(workingScheduleRepository.findByCaregiverIdAndStartTimeAndEndTime("C001", startTime, endTime))
-            .thenReturn(Optional.of(schedule));
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime))
+            .thenReturn(List.of(schedule));
         
         // Execute
         boolean result = repository.isScheduleAvailableByDateTime("C001", startTime, endTime);
         
         // Verify
         assertTrue(result);
-        verify(workingScheduleRepository).findByCaregiverIdAndStartTimeAndEndTime("C001", startTime, endTime);
+        verify(workingScheduleRepository).findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime);
     }
 
     @Test
@@ -132,16 +134,17 @@ public class CaregiverScheduleRepositoryTest {
         schedule.setStartTime(startTime);
         schedule.setEndTime(endTime);
         schedule.setAvailable(false);
+        schedule.setStatus("AVAILABLE");
         
-        when(workingScheduleRepository.findByCaregiverIdAndStartTimeAndEndTime("C001", startTime, endTime))
-            .thenReturn(Optional.of(schedule));
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime))
+            .thenReturn(List.of(schedule));
         
         // Execute
         boolean result = repository.isScheduleAvailableByDateTime("C001", startTime, endTime);
         
         // Verify
         assertFalse(result);
-        verify(workingScheduleRepository).findByCaregiverIdAndStartTimeAndEndTime("C001", startTime, endTime);
+        verify(workingScheduleRepository).findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime);
     }
 
     @Test
@@ -151,7 +154,7 @@ public class CaregiverScheduleRepositoryTest {
         LocalDateTime endTime = LocalDateTime.of(2025, 5, 15, 12, 0);
         
         WorkingSchedule schedule = new WorkingSchedule();
-        schedule.setId(1L);
+        schedule.setId(UUID.randomUUID().toString());
         schedule.setCaregiverId("C001");
         schedule.setStartTime(startTime);
         schedule.setEndTime(endTime);
@@ -195,7 +198,8 @@ public class CaregiverScheduleRepositoryTest {
         LocalDateTime newEndTime = LocalDateTime.of(2025, 5, 16, 16, 0);
         
         WorkingSchedule oldSchedule = new WorkingSchedule();
-        oldSchedule.setId(1L);
+        String oldId = UUID.randomUUID().toString();
+        oldSchedule.setId(oldId);
         oldSchedule.setCaregiverId("C001");
         oldSchedule.setStartTime(oldStartTime);
         oldSchedule.setEndTime(oldEndTime);
@@ -212,7 +216,7 @@ public class CaregiverScheduleRepositoryTest {
         assertTrue(result);
         verify(workingScheduleRepository).findByCaregiverIdAndStartTimeAndEndTime("C001", oldStartTime, oldEndTime);
         verify(workingScheduleRepository).save(argThat(schedule -> 
-            schedule.getId() == 1L &&
+            schedule.getId() == oldId &&
             schedule.getStartTime().equals(newStartTime) &&
             schedule.getEndTime().equals(newEndTime)
         ));

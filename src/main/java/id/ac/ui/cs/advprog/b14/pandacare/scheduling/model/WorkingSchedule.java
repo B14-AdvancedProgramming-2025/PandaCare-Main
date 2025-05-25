@@ -14,8 +14,7 @@ import java.time.format.DateTimeFormatter;
 public class WorkingSchedule {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
     
     @Column(name = "caregiver_id", nullable = false)
     private String caregiverId;
@@ -33,7 +32,7 @@ public class WorkingSchedule {
     private boolean available;
     
     
-    public WorkingSchedule(Long id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime, 
+    public WorkingSchedule(String id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime, 
                         String status, boolean available) {
         this.id = id;
         this.caregiverId = caregiverId;

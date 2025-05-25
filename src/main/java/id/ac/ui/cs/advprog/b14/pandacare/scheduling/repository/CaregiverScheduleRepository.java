@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class CaregiverScheduleRepository implements ScheduleRepository {
@@ -67,6 +68,7 @@ public class CaregiverScheduleRepository implements ScheduleRepository {
             
             // Create and save new schedule
             WorkingSchedule workingSchedule = new WorkingSchedule();
+            workingSchedule.setId(UUID.randomUUID().toString());
             workingSchedule.setCaregiverId(caregiverId);
             workingSchedule.setStartTime(startTime);
             workingSchedule.setEndTime(endTime);
