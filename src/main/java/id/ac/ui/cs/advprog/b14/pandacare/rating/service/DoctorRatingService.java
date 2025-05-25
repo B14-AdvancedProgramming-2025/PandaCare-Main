@@ -104,4 +104,8 @@ public class DoctorRatingService {
 
         return (Pacilian) user;
     }
+
+    public List<Caregiver> getAllDoctors() {
+        return doctorRatingRepository.findAllDoctors();
+    }
 }

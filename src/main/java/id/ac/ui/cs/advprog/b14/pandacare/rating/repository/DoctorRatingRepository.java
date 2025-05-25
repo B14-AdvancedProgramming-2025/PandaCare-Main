@@ -45,4 +45,11 @@ public class DoctorRatingRepository {
                 .filter(r -> r.getPacilian().equals(pacilian))
                 .collect(Collectors.toList());
     }
+
+    public List<Caregiver> findAllDoctors() {
+        return storage.values().stream()
+                .map(DoctorRating::getCaregiver)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

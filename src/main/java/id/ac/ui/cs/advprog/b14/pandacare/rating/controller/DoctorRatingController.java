@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.controller;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingResponse;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
@@ -131,4 +132,14 @@ public class DoctorRatingController {
             this.data = data;
         }
     }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<?> getAllDoctors() {
+        List<Caregiver> doctors = doctorRatingService.getAllDoctors();
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Doctors retrieved successfully", doctors)
+        );
+    }
+
+
 }
