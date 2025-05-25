@@ -3,15 +3,19 @@ package id.ac.ui.cs.advprog.b14.pandacare.authentication.service;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.config.JwtUtil;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.LoginRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.RegisterRequest;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.event.UserCreatedEvent;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.*;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.TokenRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +40,12 @@ class AuthServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Captor
+    private ArgumentCaptor<UserCreatedEvent> eventCaptor;
 
     @InjectMocks
     private AuthService authService;
@@ -96,6 +106,49 @@ class AuthServiceTest {
         validToken = "valid.jwt.token";
         expiryDate = new Date(System.currentTimeMillis() + 3600000);
         mockToken = new Token(validToken, expiryDate);
+    }
+
+    @Test
+    void registerPacilianPublishesEvent() {
+        when(userRepository.findByEmail("new@example.com")).thenReturn(null);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(Pacilian.class))).thenReturn(mockPacilian);
+
+        ResponseEntity<Map<String, Object>> response = authService.registerPacilian(registerRequest);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        UserCreatedEvent capturedEvent = eventCaptor.getValue();
+        assertNotNull(capturedEvent);
+        assertEquals(mockPacilian, capturedEvent.getUser());
+    }
+
+    @Test
+    void registerCaregiverPublishesEvent() {
+        when(userRepository.findByEmail("new@example.com")).thenReturn(null);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(Caregiver.class))).thenReturn(mockCaregiver);
+
+        ResponseEntity<Map<String, Object>> response = authService.registerCaregiver(registerRequest);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        UserCreatedEvent capturedEvent = eventCaptor.getValue();
+        assertNotNull(capturedEvent);
+        assertEquals(mockCaregiver, capturedEvent.getUser());
+    }
+
+    @Test
+    void registerFailureDoesNotPublishEvent() {
+        when(userRepository.findByEmail("new@example.com")).thenReturn(mockUser);
+
+        ResponseEntity<Map<String, Object>> response = authService.registerPacilian(registerRequest);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+
+        verify(eventPublisher, never()).publishEvent(any(UserCreatedEvent.class));
     }
 
     @Test
