@@ -1,29 +1,26 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.strategy;
 
-import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUpRequest;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUp;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TransactionType;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
-import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
-@Component
 public class BankTransferTopUpStrategy implements TopUpStrategy {
+    private final String bankName;
+    private final String accountNumber;
+
+    public BankTransferTopUpStrategy(String bankName, String accountNumber) {
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+    }
+
     @Override
-    public boolean processTopUp(Wallet wallet, TopUpRequest request) {
-        if (!isValidBankTransfer(request.getPaymentGatewayDetails())) {
-            return false;
+    public TopUp execute(Wallet wallet, Double amount) {
+        if (wallet.addBalance(amount)) {
+            String provider = String.format("Bank Transfer (%s: %s)", bankName, accountNumber);
+            TopUp topUp = new TopUp(amount, wallet, TransactionType.TOPUP, provider);
+            wallet.getTransactions().add(topUp);
+            return topUp;
         }
-
-        wallet.addBalance(request.getAmount());
-        return true;
-    }
-
-    private boolean isValidBankTransfer(Map<String, String> details) {
-        return details.containsKey("accountNumber") && details.containsKey("bankName");
-    }
-
-    @Override
-    public String getProviderName() {
-        return "BANK_TRANSFER";
+        return null;
     }
 }
