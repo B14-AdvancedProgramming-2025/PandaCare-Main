@@ -28,6 +28,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/register/**").permitAll()
                         .requestMatchers("/api/pacilian/**").hasRole("PACILIAN")
                         .requestMatchers("/api/caregiver/**").hasRole("CAREGIVER")
+                        
+                        // Role check is done in SchedulingController
+                        .requestMatchers("/api/scheduling/**").permitAll()
+                        
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
