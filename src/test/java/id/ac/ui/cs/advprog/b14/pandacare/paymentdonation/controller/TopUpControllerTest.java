@@ -1,98 +1,219 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.controller;
 
-import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUpRequest;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.dto.TopUpRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.service.TopUpService;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+@ExtendWith(MockitoExtension.class)
 class TopUpControllerTest {
 
     @Mock
     private TopUpService topUpService;
 
+    @InjectMocks
     private TopUpController topUpController;
+
+    private MockMvc mockMvc;
+    private User user;
+    private TopUpRequest bankTransferRequest;
+    private TopUpRequest creditCardRequest;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        topUpController = new TopUpController(topUpService);
+        mockMvc = MockMvcBuilders.standaloneSetup(topUpController).build();
+
+        user = new Pacilian(
+                "pacil-123",
+                "test@example.com",
+                "password123",
+                "Test User",
+                "1234567890123456",
+                "123 Test Street",
+                "08123456789",
+                Arrays.asList("None")
+        );
+
+        bankTransferRequest = new TopUpRequest();
+        bankTransferRequest.setAmount(50.0);
+        bankTransferRequest.setMethod("BANK_TRANSFER");
+        bankTransferRequest.setBankName("Test Bank");
+        bankTransferRequest.setAccountNumber("123456789");
+
+        creditCardRequest = new TopUpRequest();
+        creditCardRequest.setAmount(100.0);
+        creditCardRequest.setMethod("CREDIT_CARD");
+        creditCardRequest.setCardNumber("4111111111111111");
+        creditCardRequest.setCvv("123");
+        creditCardRequest.setExpiryDate("12/25");
+        creditCardRequest.setCardholderName("Test User");
     }
 
     @Test
-    void processTopUp_Success() {
-        // Arrange
-        Long walletId = 1L;
-        Double amount = 100.0;
-        Map<String, String> paymentDetails = new HashMap<>();
-        paymentDetails.put("provider", "CREDIT_CARD");
+    void processTopUpDelegatesCorrectlyToService() {
+        // Setup mock response
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        responseBody.put("message", "Topped-Up successfully");
 
-        TopUpRequest request = new TopUpRequest(walletId, amount, "Top-up with Credit Card", paymentDetails);
-        when(topUpService.topUp(request)).thenReturn(true);
+        Map<String, Object> data = new HashMap<>();
+        data.put("amount", 50.0);
+        data.put("balance", 150.0);
+        data.put("provider", "Bank Transfer (Test Bank: 123456789)");
+        responseBody.put("data", data);
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = topUpController.processTopUp(request);
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.OK).body(responseBody);
 
-        // Assert
+        when(topUpService.processTopUp(user, bankTransferRequest)).thenReturn(expectedResponse);
+
+        // Execute and verify
+        ResponseEntity<Map<String, Object>> response =
+                topUpController.processTopUp(user, bankTransferRequest);
+
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue((Boolean) response.getBody().get("success"));
-        assertEquals(amount, response.getBody().get("amount"));
-        verify(topUpService).topUp(request);
+        assertEquals(responseBody, response.getBody());
+        verify(topUpService).processTopUp(user, bankTransferRequest);
     }
 
     @Test
-    void processTopUp_Failure() {
-        // Arrange
-        TopUpRequest request = new TopUpRequest(1L, 100.0, "Failed Top-up", Map.of("provider", "BANK_TRANSFER"));
-        when(topUpService.topUp(request)).thenReturn(false);
+    void processTopUpWithBankTransferReturnsCorrectResponse() {
+        // Setup mock response
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        responseBody.put("message", "Topped-Up successfully");
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = topUpController.processTopUp(request);
+        Map<String, Object> data = new HashMap<>();
+        data.put("amount", 50.0);
+        data.put("balance", 150.0);
+        data.put("provider", "Bank Transfer (Test Bank: 123456789)");
+        responseBody.put("data", data);
 
-        // Assert
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.OK).body(responseBody);
+
+        when(topUpService.processTopUp(any(User.class), any(TopUpRequest.class)))
+                .thenReturn(expectedResponse);
+
+        // Execute and verify
+        ResponseEntity<Map<String, Object>> response =
+                topUpController.processTopUp(user, bankTransferRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertTrue((Boolean) body.get("success"));
+        assertEquals("Topped-Up successfully", body.get("message"));
+
+        Map<String, Object> responseData = (Map<String, Object>) body.get("data");
+        assertEquals(50.0, responseData.get("amount"));
+        assertEquals(150.0, responseData.get("balance"));
+        assertEquals("Bank Transfer (Test Bank: 123456789)", responseData.get("provider"));
+    }
+
+    @Test
+    void processTopUpWithCreditCardReturnsCorrectResponse() {
+        // Setup mock response
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        responseBody.put("message", "Topped-Up successfully");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("amount", 100.0);
+        data.put("balance", 200.0);
+        data.put("provider", "Credit Card (xxxx-xxxx-xxxx-1111)");
+        responseBody.put("data", data);
+
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.OK).body(responseBody);
+
+        when(topUpService.processTopUp(any(User.class), any(TopUpRequest.class)))
+                .thenReturn(expectedResponse);
+
+        // Execute and verify
+        ResponseEntity<Map<String, Object>> response =
+                topUpController.processTopUp(user, creditCardRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertTrue((Boolean) body.get("success"));
+
+        Map<String, Object> responseData = (Map<String, Object>) body.get("data");
+        assertEquals(100.0, responseData.get("amount"));
+        assertEquals(200.0, responseData.get("balance"));
+        assertTrue(((String) responseData.get("provider")).contains("Credit Card"));
+    }
+
+    @Test
+    void processTopUpWithErrorReturnsErrorResponse() {
+        // Setup mock error response
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("success", false);
+        errorResponse.put("message", "Invalid card number");
+
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+
+        when(topUpService.processTopUp(any(User.class), any(TopUpRequest.class)))
+                .thenReturn(expectedResponse);
+
+        // Execute and verify
+        ResponseEntity<Map<String, Object>> response =
+                topUpController.processTopUp(user, creditCardRequest);
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertFalse((Boolean) response.getBody().get("success"));
-        assertEquals("Failed to process top-up", response.getBody().get("message"));
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Invalid card number", body.get("message"));
     }
 
     @Test
-    void processTopUp_InvalidArgument() {
-        // Arrange
-        TopUpRequest request = new TopUpRequest(1L, 100.0, "Invalid Top-up", new HashMap<>());
-        when(topUpService.topUp(request)).thenThrow(new IllegalArgumentException("Provider not specified"));
+    void processTopUpWithWalletNotFoundReturnsNotFoundResponse() {
+        // Setup mock not found response
+        Map<String, Object> notFoundResponse = new HashMap<>();
+        notFoundResponse.put("success", false);
+        notFoundResponse.put("message", "Wallet not found");
 
-        // Act & Assert
-        ResponseStatusException exception = assertThrows(
-            ResponseStatusException.class,
-            () -> topUpController.processTopUp(request)
-        );
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body(notFoundResponse);
 
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    }
+        when(topUpService.processTopUp(any(User.class), any(TopUpRequest.class)))
+                .thenReturn(expectedResponse);
 
-    @Test
-    void processTopUp_EntityNotFound() {
-        // Arrange
-        TopUpRequest request = new TopUpRequest(999L, 100.0, "Wallet Not Found", Map.of("provider", "CREDIT_CARD"));
-        when(topUpService.topUp(request)).thenThrow(new EntityNotFoundException("Wallet not found"));
+        // Execute and verify
+        ResponseEntity<Map<String, Object>> response =
+                topUpController.processTopUp(user, bankTransferRequest);
 
-        // Act & Assert
-        ResponseStatusException exception = assertThrows(
-            ResponseStatusException.class,
-            () -> topUpController.processTopUp(request)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Wallet not found", body.get("message"));
     }
 }
