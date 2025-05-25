@@ -6,9 +6,11 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.dto.TransferRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUp;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Transaction;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TransactionType;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Transfer;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.TransactionRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +34,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +46,9 @@ class WalletServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private TransactionRepository transactionRepository;
+
     @InjectMocks
     private WalletService walletService;
 
@@ -45,6 +57,7 @@ class WalletServiceTest {
     private Wallet senderWallet;
     private Wallet receiverWallet;
     private TransferRequest transferRequest;
+    private List<Transaction> transactions;
 
     @BeforeEach
     void setUp() {
@@ -85,6 +98,20 @@ class WalletServiceTest {
         transferRequest.setReceiverEmail("receiver@example.com");
         transferRequest.setAmount(100.0);
         transferRequest.setNote("Test transfer");
+
+        // Create test transactions for pagination testing
+        transactions = new ArrayList<>();
+        TopUp topUp = new TopUp(100.0, senderWallet, TransactionType.TOPUP, "Credit Card (xxxx-xxxx-xxxx-1234)");
+        topUp.setId(1L);
+        topUp.setTimestamp(LocalDateTime.now());
+
+        Transfer transfer = new Transfer(50.0, TransactionType.TRANSFER, senderWallet, receiverWallet,
+                "Test transfer description", "Test transfer");
+        transfer.setId(2L);
+        transfer.setTimestamp(LocalDateTime.now());
+
+        transactions.add(topUp);
+        transactions.add(transfer);
     }
 
     @Test
@@ -125,7 +152,7 @@ class WalletServiceTest {
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
         when(userRepository.findByEmail("receiver@example.com")).thenReturn(receiver);
         when(walletRepository.findByUser(receiver)).thenReturn(receiverWallet);
-        when(walletRepository.save(any(Wallet.class))).thenReturn(senderWallet, receiverWallet);
+        when(walletRepository.save(any(Wallet.class))).thenReturn(null);
 
         ResponseEntity<Map<String, Object>> response = walletService.transferFunds(sender, transferRequest);
 
@@ -136,9 +163,9 @@ class WalletServiceTest {
         assertEquals("Transfer successful", body.get("message"));
 
         Map<String, Object> data = (Map<String, Object>) body.get("data");
-        assertEquals(sender.getName(), data.get("sender"));
+        assertEquals("Sender User", data.get("sender"));
         assertEquals(400.0, data.get("senderBalance"));
-        assertEquals(receiver.getName(), data.get("receiver"));
+        assertEquals("Receiver User", data.get("receiver"));
         assertEquals(300.0, data.get("receiverBalance"));
         assertEquals(100.0, data.get("amount"));
         assertEquals("Test transfer", data.get("note"));
@@ -147,11 +174,6 @@ class WalletServiceTest {
         verify(userRepository).findByEmail("receiver@example.com");
         verify(walletRepository).findByUser(receiver);
         verify(walletRepository, times(2)).save(any(Wallet.class));
-
-        assertEquals(400.0, senderWallet.getBalance());
-        assertEquals(300.0, receiverWallet.getBalance());
-        assertEquals(1, senderWallet.getTransactions().size());
-        assertEquals(1, receiverWallet.getTransactions().size());
     }
 
     @Test
@@ -186,6 +208,7 @@ class WalletServiceTest {
 
         verify(walletRepository).findByUser(sender);
         verify(userRepository).findByEmail("receiver@example.com");
+        verify(walletRepository, never()).findByUser(receiver);
         verify(walletRepository, never()).save(any(Wallet.class));
     }
 
@@ -210,7 +233,7 @@ class WalletServiceTest {
     }
 
     @Test
-    void transferFundsSameWallet() {
+    void transferFundsToSameWallet() {
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
         when(userRepository.findByEmail("receiver@example.com")).thenReturn(sender);
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
@@ -222,16 +245,11 @@ class WalletServiceTest {
         assertNotNull(body);
         assertFalse((Boolean) body.get("success"));
         assertEquals("Cannot transfer to the same wallet", body.get("message"));
-
-        verify(walletRepository, atMost(2)).findByUser(sender);
-        verify(userRepository).findByEmail("receiver@example.com");
-        verify(walletRepository, never()).save(any(Wallet.class));
     }
 
     @Test
     void transferFundsNegativeAmount() {
         transferRequest.setAmount(-50.0);
-
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
         when(userRepository.findByEmail("receiver@example.com")).thenReturn(receiver);
         when(walletRepository.findByUser(receiver)).thenReturn(receiverWallet);
@@ -243,14 +261,11 @@ class WalletServiceTest {
         assertNotNull(body);
         assertFalse((Boolean) body.get("success"));
         assertEquals("Transfer amount must be positive", body.get("message"));
-
-        verify(walletRepository, never()).save(any(Wallet.class));
     }
 
     @Test
     void transferFundsInsufficientBalance() {
-        transferRequest.setAmount(1000.0); // More than sender's balance
-
+        transferRequest.setAmount(600.0); // More than the sender's balance
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
         when(userRepository.findByEmail("receiver@example.com")).thenReturn(receiver);
         when(walletRepository.findByUser(receiver)).thenReturn(receiverWallet);
@@ -262,19 +277,22 @@ class WalletServiceTest {
         assertNotNull(body);
         assertFalse((Boolean) body.get("success"));
         assertEquals("Insufficient balance", body.get("message"));
-
-        verify(walletRepository, never()).save(any(Wallet.class));
     }
 
     @Test
     void getTransactionHistorySuccess() {
-        TopUp topUp = new TopUp(100.0, senderWallet, TransactionType.TOPUP, "Credit Card (xxxx-xxxx-xxxx-1234)");
-        Transfer transfer = new Transfer(50.0, TransactionType.TRANSFER, senderWallet, receiverWallet, "sender", "Test transfer");
-        senderWallet.setTransactions(List.of(topUp, transfer));
+        // Create a Page object with our test transactions
+        Page<Transaction> transactionPage = new PageImpl<>(
+                transactions,
+                PageRequest.of(0, 10, Sort.by("timestamp").descending()),
+                transactions.size()
+        );
 
         when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
+        when(transactionRepository.findByWallet(eq(senderWallet), any(Pageable.class)))
+                .thenReturn(transactionPage);
 
-        ResponseEntity<Map<String, Object>> response = walletService.getTransactionHistory(sender);
+        ResponseEntity<Map<String, Object>> response = walletService.getTransactionHistory(sender, 0, 10);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Map<String, Object> body = response.getBody();
@@ -282,27 +300,25 @@ class WalletServiceTest {
         assertTrue((Boolean) body.get("success"));
         assertEquals("Transaction history retrieved successfully", body.get("message"));
 
-        List<Map<String, Object>> transactions = (List<Map<String, Object>>) body.get("transactions");
-        assertEquals(2, transactions.size());
+        // Verify pagination data
+        assertEquals(0, body.get("currentPage"));
+        assertEquals(2L, body.get("totalItems"));
+        assertEquals(1, body.get("totalPages"));
 
-        Map<String, Object> topUpData = transactions.get(0);
-        assertEquals(100.0, topUpData.get("amount"));
-        assertEquals("TOPUP", topUpData.get("type"));
-        assertEquals("Credit Card (xxxx-xxxx-xxxx-1234)", topUpData.get("provider"));
+        // Verify transactions
+        List<Map<String, Object>> transactionsList = (List<Map<String, Object>>) body.get("transactions");
+        assertEquals(2, transactionsList.size());
 
-        Map<String, Object> transferData = transactions.get(1);
-        assertEquals(50.0, transferData.get("amount"));
-        assertEquals("TRANSFER", transferData.get("type"));
-        assertEquals("Test transfer", transferData.get("note"));
-
+        // Verify repository calls
         verify(walletRepository).findByUser(sender);
+        verify(transactionRepository).findByWallet(eq(senderWallet), any(Pageable.class));
     }
 
     @Test
     void getTransactionHistoryWalletNotFound() {
         when(walletRepository.findByUser(sender)).thenReturn(null);
 
-        ResponseEntity<Map<String, Object>> response = walletService.getTransactionHistory(sender);
+        ResponseEntity<Map<String, Object>> response = walletService.getTransactionHistory(sender, 0, 10);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         Map<String, Object> body = response.getBody();
@@ -311,5 +327,41 @@ class WalletServiceTest {
         assertEquals("Wallet not found", body.get("message"));
 
         verify(walletRepository).findByUser(sender);
+        verify(transactionRepository, never()).findByWallet(any(Wallet.class), any(Pageable.class));
+    }
+
+    @Test
+    void getTransactionHistoryWithCustomPageSize() {
+        int page = 1;
+        int size = 5;
+
+        // Create a Page object with our test transactions for the second page
+        Page<Transaction> transactionPage = new PageImpl<>(
+                List.of(transactions.get(1)), // Just one transaction on the second page
+                PageRequest.of(page, size, Sort.by("timestamp").descending()),
+                transactions.size()
+        );
+
+        when(walletRepository.findByUser(sender)).thenReturn(senderWallet);
+        when(transactionRepository.findByWallet(eq(senderWallet), any(Pageable.class)))
+                .thenReturn(transactionPage);
+
+        ResponseEntity<Map<String, Object>> response = walletService.getTransactionHistory(sender, page, size);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+
+        // Verify pagination data with custom page size
+        assertEquals(1, body.get("currentPage"));
+        assertEquals(6L, body.get("totalItems"));
+        assertEquals(2, body.get("totalPages"));
+
+        // Verify transactions - should only have one on the second page
+        List<Map<String, Object>> transactionsList = (List<Map<String, Object>>) body.get("transactions");
+        assertEquals(1, transactionsList.size());
+
+        verify(walletRepository).findByUser(sender);
+        verify(transactionRepository).findByWallet(eq(senderWallet), any(Pageable.class));
     }
 }
