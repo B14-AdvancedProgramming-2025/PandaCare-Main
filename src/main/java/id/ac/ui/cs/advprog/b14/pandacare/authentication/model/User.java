@@ -47,7 +47,7 @@ public abstract class User {
     @NotBlank(message = "Phone cannot be empty")
     private String phone;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Wallet wallet;
 
