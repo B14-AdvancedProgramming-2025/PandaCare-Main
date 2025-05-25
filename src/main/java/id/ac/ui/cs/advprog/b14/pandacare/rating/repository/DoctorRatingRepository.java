@@ -1,9 +1,12 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.repository;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class DoctorRatingRepository {
@@ -31,7 +34,15 @@ public class DoctorRatingRepository {
         return storage.containsKey(id);
     }
 
-    public List<DoctorRating> findByCaregiverId(String caregiverId) {
-        return storage.values().stream().filter(r -> r.getCaregiverId().equals(caregiverId)).toList();
+    public List<DoctorRating> findByCaregiver(Caregiver caregiver) {
+        return storage.values().stream()
+                .filter(r -> r.getCaregiver().equals(caregiver))
+                .collect(Collectors.toList());
+    }
+
+    public List<DoctorRating> findByPacilian(Pacilian pacilian) {
+        return storage.values().stream()
+                .filter(r -> r.getPacilian().equals(pacilian))
+                .collect(Collectors.toList());
     }
 }

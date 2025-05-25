@@ -1,5 +1,9 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.service;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.repository.DoctorRatingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,12 +20,26 @@ import static org.mockito.Mockito.*;
 public class DoctorRatingServiceTest {
 
     private DoctorRatingRepository doctorRatingRepository;
+    private UserRepository userRepository;
     private DoctorRatingService doctorRatingService;
+
+    private Caregiver caregiver;
+    private Pacilian pacilian;
 
     @BeforeEach
     public void setUp() {
         doctorRatingRepository = mock(DoctorRatingRepository.class);
-        doctorRatingService = new DoctorRatingService(doctorRatingRepository);
+        userRepository = mock(UserRepository.class);
+        doctorRatingService = new DoctorRatingService(doctorRatingRepository, userRepository);
+
+        caregiver = mock(Caregiver.class);
+        when(caregiver.getId()).thenReturn("care-1");
+
+        pacilian = mock(Pacilian.class);
+        when(pacilian.getId()).thenReturn("paci-1");
+
+        when(userRepository.findById("care-1")).thenReturn(Optional.of(caregiver));
+        when(userRepository.findById("paci-1")).thenReturn(Optional.of(pacilian));
     }
 
     @Test
@@ -30,8 +49,8 @@ public class DoctorRatingServiceTest {
 
         DoctorRating created = doctorRatingService.createRating("care-1", "paci-1", 5, "Great doctor!");
         assertNotNull(created.getId());
-        assertEquals("care-1", created.getCaregiverId());
-        assertEquals("paci-1", created.getPacilianId());
+        assertEquals(caregiver, created.getCaregiver());
+        assertEquals(pacilian, created.getPacilian());
         assertEquals(5, created.getValue());
         assertEquals("Great doctor!", created.getComment());
         verify(doctorRatingRepository).save(any(DoctorRating.class));
@@ -39,19 +58,19 @@ public class DoctorRatingServiceTest {
 
     @Test
     public void testGetRatingById() {
-        DoctorRating rating = new DoctorRating("care-1", "paci-1", 4, "Nice");
+        DoctorRating rating = new DoctorRating(caregiver, pacilian, 4, "Nice");
         when(doctorRatingRepository.findById(rating.getId())).thenReturn(rating);
 
         DoctorRating result = doctorRatingService.getRatingById(rating.getId());
-        assertEquals("care-1", result.getCaregiverId());
+        assertEquals(caregiver, result.getCaregiver());
         assertEquals("Nice", result.getComment());
     }
 
     @Test
     public void testGetAllRatings() {
         List<DoctorRating> ratings = Arrays.asList(
-                new DoctorRating("care-1", "paci-1", 4, "Good"),
-                new DoctorRating("care-2", "paci-2", 5, "Excellent")
+                new DoctorRating(caregiver, pacilian, 4, "Good"),
+                new DoctorRating(mock(Caregiver.class), mock(Pacilian.class), 5, "Excellent")
         );
         when(doctorRatingRepository.findAll()).thenReturn(ratings);
 
@@ -61,7 +80,7 @@ public class DoctorRatingServiceTest {
 
     @Test
     public void testUpdateRating() {
-        DoctorRating existing = new DoctorRating("care-1", "paci-1", 3, "Okay");
+        DoctorRating existing = new DoctorRating(caregiver, pacilian, 3, "Okay");
         String id = existing.getId();
 
         when(doctorRatingRepository.findById(id)).thenReturn(existing);
@@ -87,15 +106,14 @@ public class DoctorRatingServiceTest {
 
     @Test
     void shouldReturnRatingsByDoctorAsync() throws Exception {
-        DoctorRating r = new DoctorRating("doc-99", "pac-1", 5, "Great");
-        when(doctorRatingRepository.findByCaregiverId("doc-99"))
-                .thenReturn(List.of(r));
+        DoctorRating r = new DoctorRating(caregiver, pacilian, 5, "Great");
+        when(userRepository.findById("care-1")).thenReturn(Optional.of(caregiver));
+        when(doctorRatingRepository.findByCaregiver(caregiver)).thenReturn(List.of(r));
 
         CompletableFuture<List<DoctorRating>> future =
-                doctorRatingService.findByDoctorId("doc-99");
+                doctorRatingService.findByDoctorId("care-1");
 
         assertEquals(1, future.get().size());
+        assertEquals(r, future.get().get(0));
     }
-
-
 }

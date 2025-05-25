@@ -11,13 +11,16 @@ public class ConcreteDoctorRating extends DoctorRatingDecorator {
     @Override
     public void setValue(int value) {
         if (value < 1 || value > 5) {
-            throw new IllegalArgumentException("Rating value must be between 1 and 5.");
+            throw new IllegalArgumentException("Rating value must be between 1 and 5");
         }
         decoratedRating.setValue(value);
     }
 
     @Override
     public void setComment(String comment) {
-        decoratedRating.setComment(comment != null ? comment.trim() : null);
+        if (comment != null) {
+            comment = comment.trim();
+        }
+        decoratedRating.setComment(comment);
     }
 }
