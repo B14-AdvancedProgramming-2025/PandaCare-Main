@@ -1,7 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.model;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
@@ -13,13 +12,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter @Setter
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "userType")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = Pacilian.class, name = "PACILIAN"),
-        @JsonSubTypes.Type(value = Caregiver.class, name = "CAREGIVER")
-})
-
 @SuperBuilder
 public abstract class User {
     @Id
@@ -53,6 +45,9 @@ public abstract class User {
     @Column(nullable = false)
     @NotBlank(message = "Phone cannot be empty")
     private String phone;
+
+    @OneToOne(mappedBy = "user")
+    private Wallet wallet;
 
     protected User() {}
 

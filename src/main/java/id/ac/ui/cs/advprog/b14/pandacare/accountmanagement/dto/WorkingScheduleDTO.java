@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 @Setter
 @Builder
 public class WorkingScheduleDTO {
+    private Long id; // Added id field
     private String startTime;
     private String endTime;
     private String status;
@@ -20,6 +21,7 @@ public class WorkingScheduleDTO {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
         return WorkingScheduleDTO.builder()
+                .id(entity.getId()) // Added id mapping
                 .startTime(entity.getStartTime().format(formatter))
                 .endTime(entity.getEndTime().format(formatter))
                 .status(entity.getStatus())

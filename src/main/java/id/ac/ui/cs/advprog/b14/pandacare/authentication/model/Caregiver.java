@@ -16,10 +16,7 @@ public class Caregiver extends User {
     @Column(nullable = false)
     private String specialty;
 
-//    @ElementCollection(fetch = FetchType.EAGER) // Add FetchType.EAGER
-//    @CollectionTable(name = "caregiver_working_schedule", joinColumns = @JoinColumn(name = "caregiver_id"))
-//    @Column(name = "working_schedule")
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "caregiver_id")
     private List<WorkingSchedule> workingSchedule;
 
