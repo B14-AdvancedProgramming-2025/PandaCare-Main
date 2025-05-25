@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,8 +22,10 @@ public class Wallet {
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JsonBackReference
     private User user;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL)
     private List<Transaction> transactions = new ArrayList<>();
 

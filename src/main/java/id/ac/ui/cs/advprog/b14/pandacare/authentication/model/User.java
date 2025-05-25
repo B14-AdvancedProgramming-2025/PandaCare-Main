@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -47,6 +48,7 @@ public abstract class User {
     private String phone;
 
     @OneToOne(mappedBy = "user")
+    @JsonManagedReference
     private Wallet wallet;
 
     protected User() {}
