@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.model;
 
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
@@ -42,6 +43,9 @@ public abstract class User {
     @Column(nullable = false)
     @NotBlank(message = "Phone cannot be empty")
     private String phone;
+
+    @OneToOne(mappedBy = "user")
+    private Wallet wallet;
 
     protected User() {}
 

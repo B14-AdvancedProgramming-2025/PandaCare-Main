@@ -65,7 +65,7 @@ To address these risks, we've proposed a hybrid architecture that preserves the 
 
 This architectural evolution represents a pragmatic balance between operational simplicity and system resilience. Rather than undertaking a risky complete rewrite to microservices, we've chosen a targeted approach that addresses our most pressing concerns while maintaining the productivity advantages of our modular monolith. This strategy allows us to gradually transition toward a more distributed architecture as the application's needs evolve, following the principle of "evolve, don't rewrite."
 
-### 4. Deliverable G4
+### 4. Deliverable G4 (`feat/scheduling` by Ragnall Muhammad Al Fath (Ragnall16))
 
 #### Container Diagram for Scheduling Module
 
@@ -90,6 +90,25 @@ This architectural evolution represents a pragmatic balance between operational 
 #### Class Diagram 4 - Controller and Model
 
 ![Class Diagram 4](./images/scheduling/code-4.png)
+
+
+### 4. Deliverable G4 (`feat/payment-and-donation` by Michael Ignasius (DawnFall19))
+
+#### A. Container Diagram
+
+![Container Diagram of Payment & Donation Feature](./images/container-diagram-paymentdonation.png)
+
+#### B. Component Diagram
+
+![Component Diagram of Payment & Donation Feature](./images/component-diagram-paymentdonation.png)
+
+#### C. Class Diagram
+
+![Class Diagram of Payment & Donation Feature](./images/class-diagram-paymentdonation.png)
+
+#### D. Sequence Diagram Payment
+
+![Sequence Diagram of Payment](./images/sequence-diagram-payment-paymentdonation.png)
 
 ## Deployment Information
 
