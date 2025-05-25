@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.SchedulingService;
+import id.ac.ui.cs.advprog.b14.pandacare.monitoring.service.MonitoringService;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,10 +25,12 @@ public class SchedulingController {
 
     private static final Logger log = LoggerFactory.getLogger(SchedulingController.class);
     private final SchedulingService asyncSchedulingService;
+    private final MonitoringService monitoringService;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     
-    public SchedulingController(SchedulingService asyncSchedulingService) { 
+    public SchedulingController(SchedulingService asyncSchedulingService, MonitoringService monitoringService) { 
         this.asyncSchedulingService = asyncSchedulingService;
+        this.monitoringService = monitoringService;
     }
     
     @GetMapping("/caregiver/consultations")
@@ -115,9 +119,11 @@ public class SchedulingController {
             @RequestBody Map<String, String> requestBody,
             @AuthenticationPrincipal User user) { 
         
+        Timer.Sample sample = monitoringService.startConsultationBookingTimer();
         Map<String, Object> response = new HashMap<>();
 
         if (user == null) {
+            monitoringService.stopConsultationBookingTimer(sample);
             log.warn("User from @AuthenticationPrincipal is null for bookConsultationAsync.");
             response.put("success", false);
             response.put("message", "User not authenticated or not found.");
@@ -126,6 +132,7 @@ public class SchedulingController {
         }
         
         if (user.getType() != UserType.PACILIAN) {
+            monitoringService.stopConsultationBookingTimer(sample);
             response.put("success", false);
             response.put("message", "Only pacilians can book consultations");
             return CompletableFuture.completedFuture(
@@ -142,7 +149,9 @@ public class SchedulingController {
         
         return asyncSchedulingService.bookConsultationWithDateTimeAsync(caregiverId, pacilianId, startTime, endTime)
                 .thenApply(result -> {
+                    monitoringService.stopConsultationBookingTimer(sample);
                     if (result) {
+                        monitoringService.recordConsultationBooked();
                         response.put("success", true);
                         response.put("message", "Consultation booked successfully");
                         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -153,6 +162,7 @@ public class SchedulingController {
                     }
                 })
                 .exceptionally(ex -> {
+                    monitoringService.stopConsultationBookingTimer(sample);
                     log.error("Error booking consultation", ex);
                     response.put("success", false);
                     response.put("message", "Failed to book consultation: " + ex.getMessage());
@@ -196,6 +206,7 @@ public class SchedulingController {
         return asyncSchedulingService.acceptConsultationWithDateTimeAsync(caregiverId, pacilianId, startDateTime, endDateTime)
                 .thenApply(result -> {
                     if (result) {
+                        monitoringService.recordConsultationAccepted();
                         response.put("success", true);
                         response.put("message", "Consultation accepted successfully");
                         return ResponseEntity.ok(response);
@@ -249,6 +260,7 @@ public class SchedulingController {
         return asyncSchedulingService.rejectConsultationWithDateTimeAsync(caregiverId, pacilianId, startDateTime, endDateTime)
                 .thenApply(result -> {
                     if (result) {
+                        monitoringService.recordConsultationRejected();
                         response.put("success", true);
                         response.put("message", "Consultation rejected successfully");
                         return ResponseEntity.ok(response);
@@ -273,9 +285,11 @@ public class SchedulingController {
             @AuthenticationPrincipal User user) { 
         log.info("Entering createScheduleAsync. Authenticated user: {}", (user != null ? user.getEmail() : "null"));
         
+        Timer.Sample sample = monitoringService.startScheduleCreationTimer();
         Map<String, Object> responseMap = new HashMap<>(); 
 
         if (user == null) {
+            monitoringService.stopScheduleCreationTimer(sample);
             log.warn("User from @AuthenticationPrincipal is null for createScheduleAsync.");
             responseMap.put("success", false);
             responseMap.put("message", "User not authenticated or not found.");
@@ -286,6 +300,7 @@ public class SchedulingController {
         log.info("User found via @AuthenticationPrincipal: ID={}, Email={}, Type={}", user.getId(), user.getEmail(), user.getType());
         
         if (user.getType() != UserType.CAREGIVER) {
+            monitoringService.stopScheduleCreationTimer(sample);
             log.warn("Access denied for createScheduleAsync. User ID: {}, User Type: {}. Expected CAREGIVER.", user.getId(), user.getType());
             responseMap.put("success", false);
             responseMap.put("message", "Only caregivers can create schedules");
@@ -303,7 +318,9 @@ public class SchedulingController {
             
             return asyncSchedulingService.createScheduleWithDateTimeAsync(caregiverId, startTime, endTime)
                     .thenApply(result -> {
+                        monitoringService.stopScheduleCreationTimer(sample);
                         if (result) {
+                            monitoringService.recordScheduleCreated();
                             responseMap.put("success", true);
                             responseMap.put("message", "Schedule created successfully");
                             return ResponseEntity.ok(responseMap);
@@ -314,6 +331,7 @@ public class SchedulingController {
                         }
                     })
                     .exceptionally(ex -> {
+                        monitoringService.stopScheduleCreationTimer(sample);
                         log.error("Error creating schedule for caregiverId {}: {}", caregiverId, ex.getMessage(), ex);
                         responseMap.put("success", false);
                         responseMap.put("message", "Failed to create schedule: " + ex.getMessage());
@@ -321,6 +339,7 @@ public class SchedulingController {
                     });
                 
         } catch (Exception e) {
+            monitoringService.stopScheduleCreationTimer(sample);
             log.error("Error parsing request for create schedule for caregiverId {}: {}", caregiverId, e.getMessage(), e);
             responseMap.put("success", false);
             responseMap.put("message", "Invalid request format: " + e.getMessage());
