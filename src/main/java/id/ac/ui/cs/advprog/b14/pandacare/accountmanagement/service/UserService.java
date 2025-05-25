@@ -68,7 +68,7 @@ public class UserService {
                 List<WorkingSchedule> finalWorkingScheduleList = new ArrayList<>();
 
                 if (wsDataList != null) {
-                    // Create a mutable map of existing schedules by ID for efficient lookup and to track which ones are processed
+                    // Create a mutable map of existing schedules to update
                     Map<Long, WorkingSchedule> existingSchedulesMap = caregiver.getWorkingSchedule()
                             .stream()
                             .collect(Collectors.toMap(
@@ -82,18 +82,15 @@ public class UserService {
                         WorkingSchedule scheduleEntity;
 
                         if (dto.getId() != null && existingSchedulesMap.containsKey(dto.getId())) {
-                            // Existing schedule: retrieve it from the map and update it
+                            // Existing schedule: update it
                             scheduleEntity = existingSchedulesMap.get(dto.getId());
-                            // Remove from map to indicate it has been processed / is still active
-                            existingSchedulesMap.remove(dto.getId());
+                            existingSchedulesMap.remove(dto.getId()); // Mark as processed
                         } else {
-                            // New schedule (DTO has no ID, or ID not found in existing schedules for this caregiver)
+                            // New schedule
                             scheduleEntity = new WorkingSchedule();
-                            scheduleEntity.setCaregiverId(caregiver.getId()); // Associate with the current caregiver
-                            // If DTO provides an ID (even if not found in existingSchedulesMap), set it.
-                            // This matches the previous behavior where JPA would attempt to merge/persist with this ID.
+                            scheduleEntity.setCaregiverId(caregiver.getId()); // Associate with caregiver
                             if (dto.getId() != null) {
-                                scheduleEntity.setId(dto.getId());
+                                scheduleEntity.setId(dto.getId()); // Set ID if provided
                             }
                         }
 
@@ -129,5 +126,12 @@ public class UserService {
             }
         }
         return userRepository.save(user);
+    }
+
+    public void deleteUser(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+        userRepository.deleteById(userId);
     }
 }
