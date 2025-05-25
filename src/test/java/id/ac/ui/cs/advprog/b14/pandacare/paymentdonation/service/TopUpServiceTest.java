@@ -1,22 +1,24 @@
 package id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.service;
 
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
-import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.*;
-import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.TransactionRepository;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.dto.TopUpRequest;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUp;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TransactionType;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.WalletRepository;
-import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.strategy.TopUpStrategy;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,161 +28,208 @@ import static org.mockito.Mockito.*;
 class TopUpServiceTest {
 
     @Mock
-    private User user;
-
-    @Mock
-    private TopUpStrategy creditCardStrategy;
-
-    @Mock
     private WalletRepository walletRepository;
 
-    @Mock
-    private TransactionRepository transactionRepository;
-
+    @InjectMocks
     private TopUpService topUpService;
+
+    private User user;
+    private Wallet wallet;
+    private TopUpRequest bankTransferRequest;
+    private TopUpRequest creditCardRequest;
 
     @BeforeEach
     void setUp() {
-        when(creditCardStrategy.getProviderName()).thenReturn("CREDIT_CARD");
-
-        topUpService = new TopUpService(
-                List.of(creditCardStrategy),
-                walletRepository,
-                transactionRepository
+        user = new Pacilian(
+                "pacil-123",
+                "test@example.com",
+                "password123",
+                "Test User",
+                "1234567890123456",
+                "123 Test Street",
+                "08123456789",
+                Arrays.asList("None")
         );
+
+        wallet = new Wallet(user);
+        wallet.setBalance(100.0);
+        wallet.setTransactions(new ArrayList<>());
+
+        bankTransferRequest = new TopUpRequest();
+        bankTransferRequest.setAmount(50.0);
+        bankTransferRequest.setMethod("BANK_TRANSFER");
+        bankTransferRequest.setBankName("Test Bank");
+        bankTransferRequest.setAccountNumber("123456789");
+
+        creditCardRequest = new TopUpRequest();
+        creditCardRequest.setAmount(100.0);
+        creditCardRequest.setMethod("CREDIT_CARD");
+        creditCardRequest.setCardNumber("4111111111111111");
+        creditCardRequest.setCvv("123");
+        creditCardRequest.setExpiryDate("12/25");
+        creditCardRequest.setCardholderName("Test User");
     }
 
     @Test
-    void topUp_WhenSuccessful_ShouldReturnTrueAndSaveTransaction() {
-        // Arrange
-        Long walletId = 1L;
-        Double amount = 100.0;
+    void testProcessTopUpWithBankTransferSuccess() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
+        when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
 
-        Wallet wallet = new Wallet(user);
-        wallet.setId(walletId);
-        wallet.setBalance(50.0);
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, bankTransferRequest);
 
-        Map<String, String> paymentDetails = new HashMap<>();
-        paymentDetails.put("provider", "CREDIT_CARD");
-        paymentDetails.put("cardNumber", "1234567890123456");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertTrue((Boolean) body.get("success"));
+        assertEquals("Topped-Up successfully", body.get("message"));
 
-        TopUpRequest request = new TopUpRequest(walletId, amount, "Top-up with Credit Card", paymentDetails);
+        Map<String, Object> data = (Map<String, Object>) body.get("data");
+        assertEquals(50.0, data.get("amount"));
+        assertEquals(150.0, data.get("balance"));
+        assertTrue(((String) data.get("provider")).contains("Bank Transfer"));
 
-        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
-        when(creditCardStrategy.processTopUp(wallet, request)).thenReturn(true);
-
-        // Act
-        boolean result = topUpService.topUp(request);
-
-        // Assert
-        assertTrue(result);
-
-        // Verify strategy was called
-        verify(creditCardStrategy).processTopUp(wallet, request);
-
-        // Verify transaction was created and saved
-        ArgumentCaptor<Transaction> transactionCaptor = ArgumentCaptor.forClass(Transaction.class);
-        verify(transactionRepository).save(transactionCaptor.capture());
-
-        Transaction savedTransaction = transactionCaptor.getValue();
-        assertEquals(wallet, savedTransaction.getWallet());
-        assertEquals(amount, savedTransaction.getAmount());
-        assertEquals(TransactionType.TOPUP, savedTransaction.getType());
-        assertEquals("Top-up via CREDIT_CARD", savedTransaction.getDescription());
-        assertEquals("CREDIT_CARD", savedTransaction.getProvider());
-
-        // Verify wallet was saved
+        verify(walletRepository).findByUser(user);
         verify(walletRepository).save(wallet);
+        assertEquals(150.0, wallet.getBalance());
+        assertEquals(1, wallet.getTransactions().size());
+
+        TopUp topUp = (TopUp) wallet.getTransactions().get(0);
+        assertEquals(50.0, topUp.getAmount());
+        assertEquals(TransactionType.TOPUP, topUp.getType());
     }
 
     @Test
-    void topUp_WhenProviderNotSpecified_ShouldThrowException() {
-        // Arrange
-        Map<String, String> paymentDetails = new HashMap<>();
-        // Missing provider
+    void testProcessTopUpWithCreditCardSuccess() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
+        when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
 
-        TopUpRequest request = new TopUpRequest(1L, 100.0, "Invalid top-up", paymentDetails);
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, creditCardRequest);
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> topUpService.topUp(request)
-        );
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertTrue((Boolean) body.get("success"));
 
-        assertEquals("Provider not specified in payment gateway details", exception.getMessage());
+        Map<String, Object> data = (Map<String, Object>) body.get("data");
+        assertEquals(100.0, data.get("amount"));
+        assertEquals(200.0, data.get("balance"));
+        assertTrue(((String) data.get("provider")).contains("Credit Card"));
 
-        // Verify repository methods were not called
-        verifyNoInteractions(walletRepository, transactionRepository);
+        verify(walletRepository).save(wallet);
+        assertEquals(200.0, wallet.getBalance());
     }
 
     @Test
-    void topUp_WhenUnsupportedProvider_ShouldThrowException() {
-        // Arrange
-        Map<String, String> paymentDetails = new HashMap<>();
-        paymentDetails.put("provider", "UNSUPPORTED_PROVIDER");
+    void testProcessTopUpWithNegativeAmount() {
+        TopUpRequest request = new TopUpRequest();
+        request.setAmount(-50.0);
+        request.setMethod("BANK_TRANSFER");
 
-        TopUpRequest request = new TopUpRequest(1L, 100.0, "Unsupported top-up", paymentDetails);
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, request);
 
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> topUpService.topUp(request)
-        );
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Amount must be greater than zero", body.get("message"));
 
-        assertEquals("Unsupported top-up method: UNSUPPORTED_PROVIDER", exception.getMessage());
-
-        // Verify repository methods were not called
-        verifyNoInteractions(walletRepository, transactionRepository);
+        verify(walletRepository, never()).save(any());
     }
 
     @Test
-    void topUp_WhenWalletNotFound_ShouldThrowException() {
-        // Arrange
-        Long walletId = 999L;
+    void testProcessTopUpWithWalletNotFound() {
+        when(walletRepository.findByUser(user)).thenReturn(null);
 
-        Map<String, String> paymentDetails = new HashMap<>();
-        paymentDetails.put("provider", "CREDIT_CARD");
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, bankTransferRequest);
 
-        TopUpRequest request = new TopUpRequest(walletId, 100.0, "Wallet not found", paymentDetails);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Wallet not found", body.get("message"));
 
-        when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        EntityNotFoundException exception = assertThrows(
-                EntityNotFoundException.class,
-                () -> topUpService.topUp(request)
-        );
-
-        assertEquals("Wallet not found", exception.getMessage());
-
-        // Verify no transaction was saved
-        verifyNoInteractions(transactionRepository);
+        verify(walletRepository, never()).save(any());
     }
 
     @Test
-    void topUp_WhenStrategyFails_ShouldReturnFalseWithoutSavingTransaction() {
-        // Arrange
-        Long walletId = 1L;
+    void testProcessTopUpWithInvalidMethod() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
 
-        Wallet wallet = new Wallet(user);
-        wallet.setId(walletId);
+        TopUpRequest request = new TopUpRequest();
+        request.setAmount(50.0);
+        request.setMethod("INVALID_METHOD");
 
-        Map<String, String> paymentDetails = new HashMap<>();
-        paymentDetails.put("provider", "CREDIT_CARD");
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, request);
 
-        TopUpRequest request = new TopUpRequest(walletId, 100.0, "Failed top-up", paymentDetails);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Invalid method", body.get("message"));
 
-        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
-        when(creditCardStrategy.processTopUp(wallet, request)).thenReturn(false);
+        verify(walletRepository, never()).save(any());
+    }
 
-        // Act
-        boolean result = topUpService.topUp(request);
+    @Test
+    void testProcessTopUpWithMissingBankDetails() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
 
-        // Assert
-        assertFalse(result);
+        TopUpRequest request = new TopUpRequest();
+        request.setAmount(50.0);
+        request.setMethod("BANK_TRANSFER");
+        // Missing bank name
 
-        // Verify no transaction was saved
-        verifyNoInteractions(transactionRepository);
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Bank name is required", body.get("message"));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    void testProcessTopUpWithInvalidCardDetails() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
+
+        TopUpRequest request = new TopUpRequest();
+        request.setAmount(50.0);
+        request.setMethod("CREDIT_CARD");
+        request.setCardNumber("invalid"); // Invalid card number
+
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Invalid card number", body.get("message"));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    void testProcessTopUpWithExpiredCard() {
+        when(walletRepository.findByUser(user)).thenReturn(wallet);
+
+        TopUpRequest request = new TopUpRequest();
+        request.setAmount(50.0);
+        request.setMethod("CREDIT_CARD");
+        request.setCardNumber("4111111111111111");
+        request.setCvv("123");
+        request.setExpiryDate("01/20"); // Expired date
+        request.setCardholderName("Test User");
+
+        ResponseEntity<Map<String, Object>> response = topUpService.processTopUp(user, request);
+
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertFalse((Boolean) body.get("success"));
+        assertEquals("Card is expired", body.get("message"));
+
         verify(walletRepository, never()).save(any());
     }
 }
