@@ -6,8 +6,6 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.SchedulingService;
-import id.ac.ui.cs.advprog.b14.pandacare.monitoring.service.MonitoringService;
-import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,16 +34,12 @@ public class SchedulingControllerTest {
     @Mock
     private SchedulingService asyncSchedulingService;
 
-    @Mock
-    private MonitoringService monitoringService;
-
     @InjectMocks
     private SchedulingController controller;
 
     private DateTimeFormatter formatter;
     private User caregiverUser;
     private User pacilianUser;
-    private Timer.Sample mockSample;
 
     @BeforeEach
     public void setup() {
@@ -61,10 +55,6 @@ public class SchedulingControllerTest {
         when(pacilianUser.getId()).thenReturn("P001");
         when(pacilianUser.getEmail()).thenReturn("pacilian@example.com");
         when(pacilianUser.getType()).thenReturn(UserType.PACILIAN);
-
-        mockSample = mock(Timer.Sample.class);
-        when(monitoringService.startConsultationBookingTimer()).thenReturn(mockSample);
-        when(monitoringService.startScheduleCreationTimer()).thenReturn(mockSample);
     }
 
     @Test
