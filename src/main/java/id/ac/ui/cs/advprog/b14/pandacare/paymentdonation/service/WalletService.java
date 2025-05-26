@@ -7,12 +7,17 @@ import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.TopUp;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Transaction;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Transfer;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.model.Wallet;
+import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.TransactionRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.repository.WalletRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.paymentdonation.strategy.TransferStrategy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,10 +27,13 @@ import java.util.Map;
 public class WalletService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
 
-    public WalletService(WalletRepository walletRepository, UserRepository userRepository) {
+    public WalletService(WalletRepository walletRepository, UserRepository userRepository,
+                         TransactionRepository transactionRepository) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public ResponseEntity<Map<String, Object>> getBalance(User user) {
@@ -122,7 +130,7 @@ public class WalletService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> getTransactionHistory(User user) {
+    public ResponseEntity<Map<String, Object>> getTransactionHistory(User user, int page, int size) {
         Map<String, Object> response = new HashMap<>();
 
         Wallet wallet = walletRepository.findByUser(user);
@@ -132,28 +140,39 @@ public class WalletService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        List<Transaction> transactions = wallet.getTransactions();
-        List<Map<String, Object>> transactionDataList = transactions.stream()
-                .map(transaction -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", transaction.getId());
-                    data.put("amount", transaction.getAmount());
-                    data.put("description", transaction.getDescription());
-                    data.put("type", transaction.getType().toString());
-                    data.put("timestamp", transaction.getTimestamp());
-                    if (transaction instanceof TopUp) {
-                        data.put("provider", ((TopUp) transaction).getProvider());
-                    } else if (transaction instanceof Transfer) {
-                        data.put("note", ((Transfer) transaction).getNote());
-                        data.put("senderName", ((Transfer) transaction).getSenderWallet().getUser().getName());
-                        data.put("receiverName", ((Transfer) transaction).getReceiverWallet().getUser().getName());
-                    }
-                    return data;
-                })
+        // Use Spring Data JPA Pageable
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
+        Page<Transaction> transactionsPage = transactionRepository.findByWallet(wallet, pageable);
+
+        List<Map<String, Object>> transactionDataList = transactionsPage.getContent().stream()
+                .map(this::mapTransactionToResponse)
                 .toList();
+
         response.put("success", true);
         response.put("message", "Transaction history retrieved successfully");
         response.put("transactions", transactionDataList);
+        response.put("currentPage", transactionsPage.getNumber());
+        response.put("totalItems", transactionsPage.getTotalElements());
+        response.put("totalPages", transactionsPage.getTotalPages());
+
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    private Map<String, Object> mapTransactionToResponse(Transaction transaction) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", transaction.getId());
+        data.put("amount", transaction.getAmount());
+        data.put("description", transaction.getDescription());
+        data.put("type", transaction.getType().toString());
+        data.put("timestamp", transaction.getTimestamp());
+        // Add specialized fields based on transaction type
+        if (transaction instanceof TopUp) {
+            data.put("provider", ((TopUp) transaction).getProvider());
+        } else if (transaction instanceof Transfer) {
+            data.put("note", ((Transfer) transaction).getNote());
+            data.put("senderName", ((Transfer) transaction).getSenderWallet().getUser().getName());
+            data.put("receiverName", ((Transfer) transaction).getReceiverWallet().getUser().getName());
+        }
+        return data;
     }
 }

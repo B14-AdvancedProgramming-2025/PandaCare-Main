@@ -33,7 +33,9 @@ public class TransactionController {
 
     @GetMapping("/transactions")
     public ResponseEntity<Map<String, Object>> getTransactionHistory(
-            @AuthenticationPrincipal User user) {
-        return walletService.getTransactionHistory(user);
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return walletService.getTransactionHistory(user, page, size);
     }
 }
