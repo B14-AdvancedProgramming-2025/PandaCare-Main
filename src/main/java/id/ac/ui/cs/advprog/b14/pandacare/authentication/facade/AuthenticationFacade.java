@@ -2,7 +2,6 @@ package id.ac.ui.cs.advprog.b14.pandacare.authentication.facade;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.LoginRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.RegisterRequest;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Token;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
