@@ -157,8 +157,8 @@ Required GitHub Secrets:
 
 ### Profiling
 
-![CPU Time](.\images\scheduling\profiling\profiling1.png)
+![CPU Time](./images/scheduling/profiling/profiling1.png)
 
-![Memory Allocation](.\images\scheduling\profiling\profiling2.png)
+![Memory Allocation](./images/scheduling/profiling/profiling2.png)
 
-![Call Tree](.\images\scheduling\profiling\profiling3.png)
+![Call Tree](./images/scheduling/profiling/profiling3.png)
