@@ -131,3 +131,24 @@ Required GitHub Secrets:
 - `AWS_HOST`: The AWS EC2 host address
 - `AWS_SSH_PRIVATE_KEY`: SSH private key for connecting to EC2
 - `AWS_USERNAME`: Username for SSH connection
+
+### Profiling Results
+
+![Profiling-1](./images/chat-profiling-1.png)
+![Profiling-2](./images/chat-profiling-2.png)
+![Profiling-3](./images/chat-profiling-3.png)
+![Profiling-4](./images/chat-profiling-4.png)
+
+#### Performance Analysis
+
+The profiling results demonstrate that the chat module is performing efficiently without any significant bottlenecks or memory issues that require optimization:
+
+1. **Memory Usage**: The application maintains stable memory consumption with the majority of allocations coming from standard Spring Framework operations and WebSocket message handling, which is expected behavior.
+
+2. **Method Performance**: The call tree shows that the most resource-intensive operations are related to Spring's dependency injection and WebSocket connection management, both of which are framework-level operations that are already optimized.
+
+3. **Chat Service Performance**: The chat-specific methods (`createNewChatRoom`, `sendMessage`) show minimal resource consumption relative to the overall application, indicating efficient implementation.
+
+4. **No Memory Leaks**: The profiling data shows consistent memory patterns without any signs of memory leaks or excessive object creation in the chat module.
+
+Based on these profiling results, no code optimization is currently needed. The application is performing within expected parameters, and any performance improvements would likely come from infrastructure scaling rather than code-level optimizations.
