@@ -65,28 +65,6 @@ To address these risks, we've proposed a hybrid architecture that preserves the 
 
 This architectural evolution represents a pragmatic balance between operational simplicity and system resilience. Rather than undertaking a risky complete rewrite to microservices, we've chosen a targeted approach that addresses our most pressing concerns while maintaining the productivity advantages of our modular monolith. This strategy allows us to gradually transition toward a more distributed architecture as the application's needs evolve, following the principle of "evolve, don't rewrite."
 
-### 4. Deliverable G4 (`feat/chat` by absolutepraya)
-
-#### Container Diagram for Chat Module
-
-![Container Diagram for Chat Module](./images/g4-1.png)
-
-#### Component Diagram for Chat Module
-
-![Component Diagram for Chat Module](./images/g4-2.png)
-
-#### Class Diagram - Chat Module Models
-
-![Class Diagram - Chat Module Models](./images/g4-3.png)
-
-#### Class Diagram - Chat Module Services
-
-![Class Diagram - Chat Module Services](./images/g4-4.png)
-
-#### Sequence Diagram - Sending a Chat Message
-
-![Sequence Diagram - Sending a Chat Message](./images/g4-5.png)
-
 ## Deployment Information
 
 This project uses Docker and GitHub Actions for CI/CD deployment to AWS.
@@ -132,23 +110,10 @@ Required GitHub Secrets:
 - `AWS_SSH_PRIVATE_KEY`: SSH private key for connecting to EC2
 - `AWS_USERNAME`: Username for SSH connection
 
-### Profiling Results
+### Profiling
 
-![Profiling-1](./images/chat-profiling-1.png)
-![Profiling-2](./images/chat-profiling-2.png)
-![Profiling-3](./images/chat-profiling-3.png)
-![Profiling-4](./images/chat-profiling-4.png)
+![CPU Time](./images/scheduling/profiling/profiling1.png)
 
-#### Performance Analysis
+![Memory Allocation](./images/scheduling/profiling/profiling2.png)
 
-The profiling results demonstrate that the chat module is performing efficiently without any significant bottlenecks or memory issues that require optimization:
-
-1. **Memory Usage**: The application maintains stable memory consumption with the majority of allocations coming from standard Spring Framework operations and WebSocket message handling, which is expected behavior.
-
-2. **Method Performance**: The call tree shows that the most resource-intensive operations are related to Spring's dependency injection and WebSocket connection management, both of which are framework-level operations that are already optimized.
-
-3. **Chat Service Performance**: The chat-specific methods (`createNewChatRoom`, `sendMessage`) show minimal resource consumption relative to the overall application, indicating efficient implementation.
-
-4. **No Memory Leaks**: The profiling data shows consistent memory patterns without any signs of memory leaks or excessive object creation in the chat module.
-
-Based on these profiling results, no code optimization is currently needed. The application is performing within expected parameters, and any performance improvements would likely come from infrastructure scaling rather than code-level optimizations.
+![Call Tree](./images/scheduling/profiling/profiling3.png)

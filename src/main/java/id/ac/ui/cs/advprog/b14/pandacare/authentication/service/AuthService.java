@@ -3,6 +3,7 @@ package id.ac.ui.cs.advprog.b14.pandacare.authentication.service;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.config.JwtUtil;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.LoginRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.dto.RegisterRequest;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.event.UserCreatedEvent;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.facade.AuthenticationFacade;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
@@ -11,6 +12,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.TokenRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,16 +30,19 @@ public class AuthService implements AuthenticationFacade {
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthService(
             UserRepository userRepository,
             TokenRepository tokenRepository,
             PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil) {
+            JwtUtil jwtUtil,
+            ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -58,7 +63,7 @@ public class AuthService implements AuthenticationFacade {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            String tokenString = jwtUtil.generateToken(user.getEmail());
+            String tokenString = jwtUtil.generateToken(user.getEmail(), user.getRole());
             Date expiryDate = jwtUtil.getExpirationDateFromToken(tokenString);
             tokenRepository.deleteExpiredTokens(new Date());
 
@@ -107,6 +112,7 @@ public class AuthService implements AuthenticationFacade {
             pacilian.setType(UserType.PACILIAN);
 
             Pacilian savedUser = userRepository.save(pacilian);
+            eventPublisher.publishEvent(new UserCreatedEvent(this, savedUser));
 
             response.put("success", true);
             response.put("message", "Registration successful");
@@ -155,6 +161,7 @@ public class AuthService implements AuthenticationFacade {
             caregiver.setType(UserType.CAREGIVER);
 
             Caregiver savedUser = userRepository.save(caregiver);
+            eventPublisher.publishEvent(new UserCreatedEvent(this, savedUser));
 
             response.put("success", true);
             response.put("message", "Registration successful");
@@ -249,14 +256,11 @@ public class AuthService implements AuthenticationFacade {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            // Invalidate old token
             tokenRepository.deleteByToken(oldToken);
 
-            // Generate new token
-            String newTokenString = jwtUtil.generateToken(email);
+            String newTokenString = jwtUtil.generateToken(email, user.getRole());
             Date expiryDate = jwtUtil.getExpirationDateFromToken(newTokenString);
 
-            // Save new token
             Token newToken = new Token(newTokenString, expiryDate);
             tokenRepository.save(newToken);
 
