@@ -1,15 +1,14 @@
 package id.ac.ui.cs.advprog.b14.pandacare.chat;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import id.ac.ui.cs.advprog.b14.pandacare.chat.ChatMediatorImpl;
-import id.ac.ui.cs.advprog.b14.pandacare.chat.ChatMediator;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatMessageRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.chat.storage.ChatRoomRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 class ChatMediatorTest {
     
