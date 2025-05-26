@@ -154,3 +154,10 @@ Required GitHub Secrets:
 - `AWS_HOST`: The AWS EC2 host address
 - `AWS_SSH_PRIVATE_KEY`: SSH private key for connecting to EC2
 - `AWS_USERNAME`: Username for SSH connection
+
+
+![CPU Time](profiling1.png)
+
+![Memory Allocation](profiling2.png)
+
+![Call Tree](profiling3.png)
