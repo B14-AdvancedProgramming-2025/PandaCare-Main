@@ -6,6 +6,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.WorkingScheduleRe
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.ConsultationService;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
+import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -113,7 +114,7 @@ public class DefaultSchedulingStrategyTest {
         LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);
         String specialty = "Cardiology";
         
-        // Create mock caregivers instead of instantiating them
+        // Create mock caregivers
         Caregiver mockCaregiver1 = mock(Caregiver.class);
         when(mockCaregiver1.getId()).thenReturn("C001");
         when(mockCaregiver1.getName()).thenReturn("Dr. John Doe");
@@ -132,9 +133,21 @@ public class DefaultSchedulingStrategyTest {
         caregivers.add(mockCaregiver1);
         caregivers.add(mockCaregiver2);
         
+        // Mock working schedule for caregiver1 (matching specialty)
+        WorkingSchedule mockWorkingSchedule1 = mock(WorkingSchedule.class);
+        when(mockWorkingSchedule1.isAvailable()).thenReturn(true);
+        when(mockWorkingSchedule1.getStatus()).thenReturn("AVAILABLE");
+        when(mockWorkingSchedule1.getStartTime()).thenReturn(startTime);
+        when(mockWorkingSchedule1.getEndTime()).thenReturn(endTime);
+        
+        List<WorkingSchedule> availableSchedules1 = new ArrayList<>();
+        availableSchedules1.add(mockWorkingSchedule1);
+        
         when(caregiverAdapter.findAll()).thenReturn(caregivers);
-        when(scheduleRepository.isScheduleAvailableByDateTime("C001", startTime, endTime)).thenReturn(true);
-        when(scheduleRepository.isScheduleAvailableByDateTime("C002", startTime, endTime)).thenReturn(true);
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime))
+                .thenReturn(availableSchedules1);
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C002", startTime, endTime))
+                .thenReturn(new ArrayList<>()); // No available schedules for caregiver2
         
         // Execute
         List<Map<String, Object>> result = strategy.findAvailableCaregivers(startTime, endTime, specialty);
@@ -146,7 +159,7 @@ public class DefaultSchedulingStrategyTest {
         assertEquals("Dr. John Doe", caregiverInfo.get("name"));
         assertEquals("Cardiology", caregiverInfo.get("specialty"));
         verify(caregiverAdapter).findAll();
-        verify(scheduleRepository).isScheduleAvailableByDateTime("C001", startTime, endTime);
+        verify(workingScheduleRepository).findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime);
     }
 
     @Test
@@ -175,9 +188,30 @@ public class DefaultSchedulingStrategyTest {
         caregivers.add(mockCaregiver1);
         caregivers.add(mockCaregiver2);
         
+        // Mock working schedules for both caregivers
+        WorkingSchedule mockWorkingSchedule1 = mock(WorkingSchedule.class);
+        when(mockWorkingSchedule1.isAvailable()).thenReturn(true);
+        when(mockWorkingSchedule1.getStatus()).thenReturn("AVAILABLE");
+        when(mockWorkingSchedule1.getStartTime()).thenReturn(startTime);
+        when(mockWorkingSchedule1.getEndTime()).thenReturn(endTime);
+        
+        WorkingSchedule mockWorkingSchedule2 = mock(WorkingSchedule.class);
+        when(mockWorkingSchedule2.isAvailable()).thenReturn(true);
+        when(mockWorkingSchedule2.getStatus()).thenReturn("AVAILABLE");
+        when(mockWorkingSchedule2.getStartTime()).thenReturn(startTime);
+        when(mockWorkingSchedule2.getEndTime()).thenReturn(endTime);
+        
+        List<WorkingSchedule> availableSchedules1 = new ArrayList<>();
+        availableSchedules1.add(mockWorkingSchedule1);
+        
+        List<WorkingSchedule> availableSchedules2 = new ArrayList<>();
+        availableSchedules2.add(mockWorkingSchedule2);
+        
         when(caregiverAdapter.findAll()).thenReturn(caregivers);
-        when(scheduleRepository.isScheduleAvailableByDateTime("C001", startTime, endTime)).thenReturn(true);
-        when(scheduleRepository.isScheduleAvailableByDateTime("C002", startTime, endTime)).thenReturn(true);
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime))
+                .thenReturn(availableSchedules1);
+        when(workingScheduleRepository.findByCaregiversWithOverlappingTimeSlots("C002", startTime, endTime))
+                .thenReturn(availableSchedules2);
         
         // Execute
         List<Map<String, Object>> result = strategy.findAvailableCaregivers(startTime, endTime, specialty);
@@ -185,7 +219,7 @@ public class DefaultSchedulingStrategyTest {
         // Verify
         assertEquals(2, result.size());
         verify(caregiverAdapter).findAll();
-        verify(scheduleRepository).isScheduleAvailableByDateTime("C001", startTime, endTime);
-        verify(scheduleRepository).isScheduleAvailableByDateTime("C002", startTime, endTime);
+        verify(workingScheduleRepository).findByCaregiversWithOverlappingTimeSlots("C001", startTime, endTime);
+        verify(workingScheduleRepository).findByCaregiversWithOverlappingTimeSlots("C002", startTime, endTime);
     }
 }

@@ -39,6 +39,8 @@ public class SecurityConfig {
                         
                         // Role check is done in SchedulingController
                         .requestMatchers("/api/scheduling/**").permitAll()
+
+                        .requestMatchers("/actuator/**").permitAll()
                         
                         .anyRequest().authenticated()
                 )
