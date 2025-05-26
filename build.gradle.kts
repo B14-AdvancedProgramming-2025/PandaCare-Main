@@ -36,7 +36,6 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation("com.h2database:h2")
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    implementation("me.paulschwarz:spring-dotenv:3.0.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")

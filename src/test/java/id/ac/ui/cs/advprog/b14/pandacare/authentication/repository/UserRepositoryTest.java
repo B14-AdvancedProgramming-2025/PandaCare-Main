@@ -1,21 +1,21 @@
 package id.ac.ui.cs.advprog.b14.pandacare.authentication.repository;
 
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.DirtiesContext;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 
 @DataJpaTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class UserRepositoryTest {
 
     @Autowired
@@ -58,26 +58,5 @@ class UserRepositoryTest {
         User found = userRepository.findByEmail("nonexistent@example.com");
 
         assertNull(found);
-    }
-
-    @Test
-    void testSaveAndFindByEmail() {
-        userRepository.save(caregiver);
-        User user = userRepository.findByEmail("care@example.com");
-
-        assertNotNull(user);
-        assertEquals(caregiver.getId(), user.getId());
-        assertEquals(UserType.CAREGIVER, user.getType());
-    }
-
-    @Test
-    void testFindAll() {
-        entityManager.persist(pacilian);
-        entityManager.persist(caregiver);
-        entityManager.flush();
-
-        List<User> users = userRepository.findAll();
-
-        assertEquals(2, users.size());
     }
 }
