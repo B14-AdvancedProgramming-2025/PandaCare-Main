@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.DoctorRatingSummaryDto;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingResponse;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.model.DoctorRating;
@@ -32,7 +33,7 @@ public class DoctorRatingController {
         try {
             DoctorRating created = doctorRatingService.createRating(
                     request.getCaregiverId(),
-                    request.getPacilianId(),
+                    request.getPacilianEmail(),
                     request.getValue(),
                     request.getComment()
             );
@@ -134,11 +135,10 @@ public class DoctorRatingController {
     }
 
     @GetMapping("/doctors")
-    public ResponseEntity<?> getAllDoctors() {
-        List<Caregiver> doctors = doctorRatingService.getAllDoctors();
-        return ResponseEntity.ok(
-                new ApiResponse<>(true, "Doctors retrieved successfully", doctors)
-        );
+    public ResponseEntity<List<DoctorRatingSummaryDto>> getDoctorsAverageRatings() {
+        List<DoctorRatingSummaryDto> summaries =
+                doctorRatingService.getAllDoctorsAverageRatings();
+        return ResponseEntity.ok(summaries);
     }
 
 

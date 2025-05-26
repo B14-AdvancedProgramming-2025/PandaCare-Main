@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class RatingRequest {
     private String caregiverId;
-    private String pacilianId;
+    private String pacilianEmail;
     private int value;
     private String comment;
 }
