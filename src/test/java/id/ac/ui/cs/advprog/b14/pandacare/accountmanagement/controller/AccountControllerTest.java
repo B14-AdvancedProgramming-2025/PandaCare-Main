@@ -1,13 +1,13 @@
 package id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UpdateProfileDTO;
+import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.dto.UserProfileDTO;
 import id.ac.ui.cs.advprog.b14.pandacare.accountmanagement.service.AccountService;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
-import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.BeanUtils;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -41,6 +42,8 @@ public class AccountControllerTest {
 
     private Pacilian testPacilian;
     private ObjectMapper objectMapper;
+    private UserProfileDTO testUserProfileDTO;
+    private UpdateProfileDTO updateProfileDTO;
 
     @BeforeEach
     void setUp() {
@@ -56,16 +59,40 @@ public class AccountControllerTest {
                 .medicalHistory(List.of("Asthma", "Diabetes"))
                 .build();
 
+        updateProfileDTO = UpdateProfileDTO.builder()
+                .name(testPacilian.getName())
+                .address(testPacilian.getAddress())
+                .phone(testPacilian.getPhone())
+                .type(testPacilian.getType())
+                .medicalHistory(testPacilian.getMedicalHistory())
+                .email(testPacilian.getEmail())
+                .nik(testPacilian.getNik())
+                .build();
+
+        testUserProfileDTO = UserProfileDTO.builder()
+                .id(testPacilian.getId())
+                .email(testPacilian.getEmail())
+                .name(testPacilian.getName())
+                .nik(testPacilian.getNik())
+                .address(testPacilian.getAddress())
+                .phone(testPacilian.getPhone())
+                .type(testPacilian.getType())
+                .medicalHistory(testPacilian.getMedicalHistory())
+                .specialty(null)
+                .workingSchedule(Collections.emptyList())
+                .consultationHistory(Collections.emptyList())
+                .build();
+
         Mockito.reset(accountService);
     }
 
     @Test
     void testGetProfileById() throws Exception {
-        when(accountService.getProfileById(testPacilian.getId())).thenReturn(testPacilian);
+        when(accountService.getProfileById(testPacilian.getId())).thenReturn(testUserProfileDTO);
 
         mockMvc.perform(get("/api/profile/" + testPacilian.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200)) // was $.status
+                .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").value("Profile retrieved successfully"))
                 .andExpect(jsonPath("$.result.name").value("John Doe"))
                 .andExpect(jsonPath("$.result.medicalHistory[0]").value("Asthma"));
@@ -84,11 +111,12 @@ public class AccountControllerTest {
 
     @Test
     void testUpdateProfile() throws Exception {
-        when(accountService.updateProfile(eq(testPacilian.getId()), any(User.class))).thenReturn(testPacilian);
+        when(accountService.updateProfile(eq(testPacilian.getId()), any(UpdateProfileDTO.class)))
+                .thenReturn(testUserProfileDTO);
 
         mockMvc.perform(put("/api/profile/" + testPacilian.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testPacilian)))
+                        .content(objectMapper.writeValueAsString(updateProfileDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.message").value("Profile updated successfully"))
@@ -99,12 +127,12 @@ public class AccountControllerTest {
     @Test
     void testUpdateProfileNotFound() throws Exception {
         UUID fakeId = UUID.randomUUID();
-        when(accountService.updateProfile(eq(fakeId.toString()), any(User.class)))
+        when(accountService.updateProfile(eq(fakeId.toString()), any(UpdateProfileDTO.class)))
                 .thenThrow(new NoSuchElementException("User not found"));
 
         mockMvc.perform(put("/api/profile/" + fakeId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testPacilian)))
+                        .content(objectMapper.writeValueAsString(updateProfileDTO)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("User not found"));
     }

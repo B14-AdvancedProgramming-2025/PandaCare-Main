@@ -27,7 +27,6 @@ public class AccountServiceImpl implements AccountService {
 
     private final PacilianRepository pacilianRepository;
     private final CaregiverRepository caregiverRepository;
-    // private final ConsultationRepository consultationRepository; // Assuming this exists
 
     @Override
     @Transactional(readOnly = true)
@@ -81,10 +80,8 @@ public class AccountServiceImpl implements AccountService {
     @Transactional // Add @Transactional
     public void deleteProfile(String id) {
         if (pacilianRepository.existsById(id)) {
-            // Consider deleting related data like consultations before deleting the user
             pacilianRepository.deleteById(id);
         } else if (caregiverRepository.existsById(id)) {
-            // Consider deleting related data like consultations before deleting the user
             caregiverRepository.deleteById(id);
         } else {
             throw new NoSuchElementException("User not found with ID: " + id);
@@ -117,31 +114,8 @@ public class AccountServiceImpl implements AccountService {
 
         }
 
-        builder.consultationHistory(Collections.emptyList()); // Belum ada implementasi real
+        builder.consultationHistory(Collections.emptyList());
         return builder.build();
     }
 
-
-    // Placeholder for consultation history logic
-    // Uncomment and implement when Consultation model and repository are available
-    /*
-    private List<ConsultationDTO> getConsultationHistory(User user) {
-        List<Consultation> consultations;
-        if (user instanceof Pacilian) {
-            consultations = consultationRepository.findByPacilianIdOrderByConsultationTimeDesc(user.getId());
-        } else if (user instanceof Caregiver) {
-            consultations = consultationRepository.findByCaregiverIdOrderByConsultationTimeDesc(user.getId());
-        } else {
-            return Collections.emptyList();
-        }
-
-        return consultations.stream()
-                .map(consultation -> ConsultationDTO.builder()
-                        .consultationTime(consultation.getConsultationTime())
-                        .partnerName(user instanceof Pacilian ? consultation.getCaregiver().getName() : consultation.getPacilian().getName())
-                        .notes(consultation.getNotes())
-                        .build())
-                .collect(Collectors.toList());
-    }
-    */
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @Getter @Setter
 @SuperBuilder
 public class Pacilian extends User {
-    @ElementCollection(fetch = FetchType.EAGER) // Add FetchType.EAGER
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "pacilian_medical_history", joinColumns = @JoinColumn(name = "pacilian_id"))
     @Column(name = "medical_history")
     private List<String> medicalHistory;

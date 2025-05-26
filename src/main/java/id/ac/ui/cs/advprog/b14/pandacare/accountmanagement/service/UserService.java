@@ -26,22 +26,23 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private ObjectMapper objectMapper; // Autowire ObjectMapper
+    private ObjectMapper objectMapper;
 
     private static final DateTimeFormatter DTO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 
+    // returns User directly
     public User findUserByEmail(String email) {
-        return userRepository.findByEmail(email); // Corrected: findByEmail returns User directly
+        return userRepository.findByEmail(email);
     }
 
-    public User findUserById(String userId) { // Corrected: ID type is String
+    public User findUserById(String userId) {
         return userRepository.findById(userId).orElse(null);
     }
 
     public User updateUserProfile(String userId, String userType, Map<String, Object> updates) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Update common fields
+        // Fields that both parties have
         if (updates.containsKey("name")) {
             user.setName((String) updates.get("name"));
         }
@@ -55,7 +56,6 @@ public class UserService {
         if (UserType.valueOf(userType) == UserType.PACILIAN && user instanceof Pacilian) {
             Pacilian pacilian = (Pacilian) user;
             if (updates.containsKey("medicalHistory")) {
-                // Assuming medicalHistory is sent as a List of Strings
                 pacilian.setMedicalHistory((List<String>) updates.get("medicalHistory"));
             }
         } else if (UserType.valueOf(userType) == UserType.CAREGIVER && user instanceof Caregiver) {
@@ -74,7 +74,7 @@ public class UserService {
                             .collect(Collectors.toMap(
                                 WorkingSchedule::getId,
                                 ws -> ws,
-                                (ws1, ws2) -> ws1 // Handle potential duplicates if any, though IDs should be unique
+                                (ws1, ws2) -> ws1 // Handle potential duplicates if any
                             ));
 
                     for (Map<String, Object> scheduleMap : wsDataList) {
@@ -82,33 +82,31 @@ public class UserService {
                         WorkingSchedule scheduleEntity;
 
                         if (dto.getId() != null && existingSchedulesMap.containsKey(dto.getId())) {
-                            // Existing schedule: update it
+                            // Update schedule if alr exists
                             scheduleEntity = existingSchedulesMap.get(dto.getId());
                             existingSchedulesMap.remove(dto.getId()); // Mark as processed
                         } else {
                             // New schedule
                             scheduleEntity = new WorkingSchedule();
-                            scheduleEntity.setCaregiverId(caregiver.getId()); // Associate with caregiver
+                            scheduleEntity.setCaregiverId(caregiver.getId());
                             if (dto.getId() != null) {
-                                scheduleEntity.setId(dto.getId()); // Set ID if provided
+                                scheduleEntity.setId(dto.getId());
                             }
                         }
 
-                        // Populate/update entity fields from DTO
+                        // Update entity fields from DTO
                         if (dto.getStartTime() != null && !dto.getStartTime().isEmpty()) {
                             scheduleEntity.setStartTime(LocalDateTime.parse(dto.getStartTime(), DTO_DATE_TIME_FORMATTER));
                         } else {
-                            scheduleEntity.setStartTime(null); // Allow clearing the field
+                            scheduleEntity.setStartTime(null);
                         }
                         if (dto.getEndTime() != null && !dto.getEndTime().isEmpty()) {
                             scheduleEntity.setEndTime(LocalDateTime.parse(dto.getEndTime(), DTO_DATE_TIME_FORMATTER));
                         } else {
-                            scheduleEntity.setEndTime(null); // Allow clearing the field
+                            scheduleEntity.setEndTime(null);
                         }
                         scheduleEntity.setStatus(dto.getStatus());
                         scheduleEntity.setAvailable(dto.isAvailable());
-                        // If WorkingSchedule has a bidirectional @ManyToOne to Caregiver, e.g. `private Caregiver caregiver;`
-                        // ensure it's set: scheduleEntity.setCaregiver(caregiver);
 
                         finalWorkingScheduleList.add(scheduleEntity);
                     }
