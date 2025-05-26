@@ -40,6 +40,11 @@ public class SecurityConfig {
                         // Role check is done in SchedulingController
                         .requestMatchers("/api/scheduling/**").permitAll()
 
+                        .requestMatchers("/api/ratings/doctors").permitAll()
+                        .requestMatchers("/api/ratings/doctor/**").permitAll()
+                        .requestMatchers("/api/ratings").hasRole("PACILIAN")
+                        .requestMatchers("/api/ratings/**").authenticated()
+
                         .requestMatchers("/ws/**").authenticated()
                         .requestMatchers("/app/**").authenticated()
                         .requestMatchers("/topic/**").authenticated()
