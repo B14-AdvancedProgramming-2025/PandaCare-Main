@@ -30,7 +30,7 @@ public class DefaultCaregiverRepositoryAdapterTest {
     @Test
     public void testFindById() {
         Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
+                "1","doctor@example.com", "password", "Dr. Example", 
                 "123456789", "123 Example St", "1234567890", 
                 "General Practice", new ArrayList<>()
         );
@@ -47,7 +47,7 @@ public class DefaultCaregiverRepositoryAdapterTest {
     @Test
     public void testSave() {
         Caregiver caregiver = new Caregiver(
-                "doctor@example.com", "password", "Dr. Example", 
+                "1","doctor@example.com", "password", "Dr. Example", 
                 "123456789", "123 Example St", "1234567890", 
                 "General Practice", new ArrayList<>()
         );
@@ -64,12 +64,12 @@ public class DefaultCaregiverRepositoryAdapterTest {
     public void testFindAll() {
         List<Caregiver> caregivers = new ArrayList<>();
         caregivers.add(new Caregiver(
-                "doctor1@example.com", "password", "Dr. John", 
+                "1","doctor1@example.com", "password", "Dr. John", 
                 "123456789", "123 Example St", "1234567890", 
                 "General Practice", new ArrayList<>()
         ));
         caregivers.add(new Caregiver(
-                "doctor2@example.com", "password", "Dr. Jane", 
+                "2","doctor2@example.com", "password", "Dr. Jane", 
                 "987654321", "456 Example St", "0987654321", 
                 "Pediatrics", new ArrayList<>()
         ));

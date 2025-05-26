@@ -2,13 +2,15 @@ package id.ac.ui.cs.advprog.b14.pandacare.scheduling.model;
 
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WorkingScheduleTest {
     
     @Test
     public void testWorkingScheduleWithDateTime() {
-        Long id = 1L;
+        String id = UUID.randomUUID().toString();
         String caregiverId = "C001";
         LocalDateTime startTime = LocalDateTime.of(2025, 6, 15, 10, 0);
         LocalDateTime endTime = LocalDateTime.of(2025, 6, 15, 12, 0);

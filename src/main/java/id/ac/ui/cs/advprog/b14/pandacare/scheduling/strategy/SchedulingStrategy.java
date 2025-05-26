@@ -9,7 +9,7 @@ import java.util.Map;
 public interface SchedulingStrategy {
     List<Consultation> getCaregiverConsultations(String caregiverId);
     
-    List<Consultation> getPatientConsultations(String pacilianId);
+    List<Consultation> getPacilianConsultations(String pacilianId);
 
     List<String> getCaregiverSchedules(String caregiverId);
     

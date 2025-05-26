@@ -1,6 +1,5 @@
 package id.ac.ui.cs.advprog.b14.pandacare.scheduling;
 
-import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.strategy.SchedulingStrategy;
 
@@ -33,12 +32,12 @@ public class SchedulingContext {
         return strategy.getCaregiverConsultations(caregiverId);
     }
 
-    public List<Consultation> getPatientConsultations(String pacilianId) {
+    public List<Consultation> getPacilianConsultations(String pacilianId) {
         if (strategy == null) {
             log.error("No scheduling strategy set");
             return new ArrayList<>();
         }
-        return strategy.getPatientConsultations(pacilianId);
+        return strategy.getPacilianConsultations(pacilianId);
     }
 
     public boolean createScheduleWithDateTime(String caregiverId, LocalDateTime startTime, LocalDateTime endTime) {

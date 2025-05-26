@@ -262,9 +262,15 @@ class TransactionControllerTest {
 
     @Test
     void getTransactionHistoryDelegatesCorrectlyToService() {
+        int page = 0;
+        int size = 10;
+
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("success", true);
         responseBody.put("message", "Transaction history retrieved successfully");
+        responseBody.put("currentPage", page);
+        responseBody.put("totalItems", 2L);
+        responseBody.put("totalPages", 1);
 
         List<Map<String, Object>> transactions = new ArrayList<>();
         Map<String, Object> transaction1 = new HashMap<>();
@@ -284,21 +290,27 @@ class TransactionControllerTest {
         ResponseEntity<Map<String, Object>> expectedResponse =
                 ResponseEntity.status(HttpStatus.OK).body(responseBody);
 
-        when(walletService.getTransactionHistory(user)).thenReturn(expectedResponse);
+        when(walletService.getTransactionHistory(user, page, size)).thenReturn(expectedResponse);
 
         ResponseEntity<Map<String, Object>> response =
-                transactionController.getTransactionHistory(user);
+                transactionController.getTransactionHistory(user, page, size);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(responseBody, response.getBody());
-        verify(walletService).getTransactionHistory(user);
+        verify(walletService).getTransactionHistory(user, page, size);
     }
 
     @Test
     void getTransactionHistoryReturnsCorrectResponse() {
+        int page = 0;
+        int size = 10;
+
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("success", true);
         responseBody.put("message", "Transaction history retrieved successfully");
+        responseBody.put("currentPage", page);
+        responseBody.put("totalItems", 2L);
+        responseBody.put("totalPages", 1);
 
         List<Map<String, Object>> transactions = new ArrayList<>();
         Map<String, Object> transaction1 = new HashMap<>();
@@ -318,16 +330,20 @@ class TransactionControllerTest {
         ResponseEntity<Map<String, Object>> expectedResponse =
                 ResponseEntity.status(HttpStatus.OK).body(responseBody);
 
-        when(walletService.getTransactionHistory(any(User.class))).thenReturn(expectedResponse);
+        when(walletService.getTransactionHistory(any(User.class), eq(page), eq(size)))
+                .thenReturn(expectedResponse);
 
         ResponseEntity<Map<String, Object>> response =
-                transactionController.getTransactionHistory(user);
+                transactionController.getTransactionHistory(user, page, size);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Map<String, Object> body = response.getBody();
         assertNotNull(body);
         assertTrue((Boolean) body.get("success"));
         assertEquals("Transaction history retrieved successfully", body.get("message"));
+        assertEquals(page, body.get("currentPage"));
+        assertEquals(2L, body.get("totalItems"));
+        assertEquals(1, body.get("totalPages"));
 
         List<Map<String, Object>> responseTransactions = (List<Map<String, Object>>) body.get("transactions");
         assertEquals(2, responseTransactions.size());
@@ -344,7 +360,51 @@ class TransactionControllerTest {
     }
 
     @Test
+    void getTransactionHistoryWithCustomPageSizeReturnsCorrectResponse() {
+        int page = 1;
+        int size = 5;
+
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        responseBody.put("message", "Transaction history retrieved successfully");
+        responseBody.put("currentPage", page);
+        responseBody.put("totalItems", 6L);
+        responseBody.put("totalPages", 2);
+
+        List<Map<String, Object>> transactions = new ArrayList<>();
+        Map<String, Object> transaction = new HashMap<>();
+        transaction.put("amount", 50.0);
+        transaction.put("type", "TRANSFER");
+        transaction.put("note", "Second page transaction");
+
+        transactions.add(transaction);
+        responseBody.put("transactions", transactions);
+
+        ResponseEntity<Map<String, Object>> expectedResponse =
+                ResponseEntity.status(HttpStatus.OK).body(responseBody);
+
+        when(walletService.getTransactionHistory(any(User.class), eq(page), eq(size)))
+                .thenReturn(expectedResponse);
+
+        ResponseEntity<Map<String, Object>> response =
+                transactionController.getTransactionHistory(user, page, size);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertEquals(page, body.get("currentPage"));
+        assertEquals(6L, body.get("totalItems"));
+        assertEquals(2, body.get("totalPages"));
+
+        List<Map<String, Object>> responseTransactions = (List<Map<String, Object>>) body.get("transactions");
+        assertEquals(1, responseTransactions.size());
+    }
+
+    @Test
     void getTransactionHistoryWithWalletNotFoundReturnsNotFoundResponse() {
+        int page = 0;
+        int size = 10;
+
         Map<String, Object> notFoundResponse = new HashMap<>();
         notFoundResponse.put("success", false);
         notFoundResponse.put("message", "Wallet not found");
@@ -352,10 +412,11 @@ class TransactionControllerTest {
         ResponseEntity<Map<String, Object>> expectedResponse =
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(notFoundResponse);
 
-        when(walletService.getTransactionHistory(any(User.class))).thenReturn(expectedResponse);
+        when(walletService.getTransactionHistory(any(User.class), eq(page), eq(size)))
+                .thenReturn(expectedResponse);
 
         ResponseEntity<Map<String, Object>> response =
-                transactionController.getTransactionHistory(user);
+                transactionController.getTransactionHistory(user, page, size);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         Map<String, Object> body = response.getBody();

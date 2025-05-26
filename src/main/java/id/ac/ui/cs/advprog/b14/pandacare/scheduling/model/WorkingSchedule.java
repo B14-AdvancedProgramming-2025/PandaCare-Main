@@ -12,9 +12,10 @@ import java.time.format.DateTimeFormatter;
 @Table(name = "caregiver_working_schedule")
 @Getter @Setter @NoArgsConstructor
 public class WorkingSchedule {
-
+    
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "caregiver_id", nullable = false)
     private String caregiverId;
@@ -32,8 +33,8 @@ public class WorkingSchedule {
     private boolean available;
 
 
-    public WorkingSchedule(String id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime,
-                           String status, boolean available) {
+    public WorkingSchedule(Long id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime,
+                        String status, boolean available) {
         this.id = id;
         this.caregiverId = caregiverId;
         this.startTime = startTime;
