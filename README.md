@@ -155,9 +155,10 @@ Required GitHub Secrets:
 - `AWS_SSH_PRIVATE_KEY`: SSH private key for connecting to EC2
 - `AWS_USERNAME`: Username for SSH connection
 
+### Profiling
 
-![CPU Time](profiling1.png)
+![CPU Time](.\images\scheduling\profiling\profiling1.png)
 
-![Memory Allocation](profiling2.png)
+![Memory Allocation](.\images\scheduling\profiling\profiling2.png)
 
-![Call Tree](profiling3.png)
+![Call Tree](.\images\scheduling\profiling\profiling3.png)
