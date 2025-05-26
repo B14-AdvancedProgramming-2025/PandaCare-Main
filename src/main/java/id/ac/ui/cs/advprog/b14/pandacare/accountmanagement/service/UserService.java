@@ -69,7 +69,7 @@ public class UserService {
 
                 if (wsDataList != null) {
                     // Create a mutable map of existing schedules to update
-                    Map<Long, WorkingSchedule> existingSchedulesMap = caregiver.getWorkingSchedule()
+                    Map<String, WorkingSchedule> existingSchedulesMap = caregiver.getWorkingSchedule()
                             .stream()
                             .collect(Collectors.toMap(
                                 WorkingSchedule::getId,

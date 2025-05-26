@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 @Setter
 @Builder
 public class WorkingScheduleDTO {
-    private Long id; // Added id field
+    private String id; // Added id field
     private String startTime;
     private String endTime;
     private String status;

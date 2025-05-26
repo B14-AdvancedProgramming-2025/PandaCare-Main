@@ -12,29 +12,28 @@ import java.time.format.DateTimeFormatter;
 @Table(name = "caregiver_working_schedule")
 @Getter @Setter @NoArgsConstructor
 public class WorkingSchedule {
-    
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+    private String id;
+
     @Column(name = "caregiver_id", nullable = false)
     private String caregiverId;
-    
+
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-    
+
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
-    
+
     @Column(nullable = false)
     private String status;
-    
+
     @Column(nullable = false)
     private boolean available;
-    
-    
-    public WorkingSchedule(Long id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime, 
-                        String status, boolean available) {
+
+
+    public WorkingSchedule(String id, String caregiverId, LocalDateTime startTime, LocalDateTime endTime,
+                           String status, boolean available) {
         this.id = id;
         this.caregiverId = caregiverId;
         this.startTime = startTime;
