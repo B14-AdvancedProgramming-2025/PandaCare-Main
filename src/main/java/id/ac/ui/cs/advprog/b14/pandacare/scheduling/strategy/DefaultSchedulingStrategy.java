@@ -8,6 +8,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ConsultationRepos
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.ScheduleRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.repository.WorkingScheduleRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.ConsultationService;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.service.ChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,18 +31,21 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
     private final ConsultationService consultationService;
     private final CaregiverRepositoryAdapter caregiverAdapter;
     private final WorkingScheduleRepository workingScheduleRepository;
+    private final ChatService chatService;
     
     public DefaultSchedulingStrategy(
             ScheduleRepository scheduleRepository, 
             ConsultationRepository consultationRepository,
             WorkingScheduleRepository workingScheduleRepository,
             ConsultationService consultationService,
-            CaregiverRepositoryAdapter caregiverAdapter) {
+            CaregiverRepositoryAdapter caregiverAdapter,
+            ChatService chatService) {
         this.scheduleRepository = scheduleRepository;
         this.consultationRepository = consultationRepository;
         this.workingScheduleRepository = workingScheduleRepository;
         this.consultationService = consultationService;
         this.caregiverAdapter = caregiverAdapter;
+        this.chatService = chatService;
     }
 
     @Override
@@ -90,7 +94,22 @@ public class DefaultSchedulingStrategy implements SchedulingStrategy {
                                                     LocalDateTime startTime, LocalDateTime endTime, String status) {
         log.info("Updating consultation status for caregiver {} with pacilian {}: {} to {} -> {}", 
                 caregiverId, pacilianId, startTime, endTime, status);
-        return consultationService.updateStatusWithDateTime(caregiverId, pacilianId, startTime, endTime, status);
+        
+        boolean updated = consultationService.updateStatusWithDateTime(caregiverId, pacilianId, startTime, endTime, status);
+        
+        // If consultation is accepted, create a chat room
+        if (updated && "ACCEPTED".equals(status)) {
+            try {
+                log.info("Creating chat room for accepted consultation between caregiver {} and pacilian {}", 
+                        caregiverId, pacilianId);
+                chatService.getChatRoomByPacilianAndCaregiver(pacilianId, caregiverId);
+            } catch (Exception e) {
+                log.error("Failed to create chat room for consultation: {}", e.getMessage());
+                // Don't fail the consultation update if chat room creation fails
+            }
+        }
+        
+        return updated;
     }
     
     @Override
