@@ -7,6 +7,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.ConsultationService;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.adapter.CaregiverRepositoryAdapter;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.WorkingSchedule;
+import id.ac.ui.cs.advprog.b14.pandacare.chat.service.ChatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -38,6 +39,9 @@ public class DefaultSchedulingStrategyTest {
     @Mock
     private CaregiverRepositoryAdapter caregiverAdapter;
     
+    @Mock
+    private ChatService chatService;
+    
     private DefaultSchedulingStrategy strategy;
     
     @BeforeEach
@@ -48,7 +52,8 @@ public class DefaultSchedulingStrategyTest {
                 consultationRepository, 
                 workingScheduleRepository,
                 consultationService,
-                caregiverAdapter
+                caregiverAdapter,
+                chatService
         );
     }
     

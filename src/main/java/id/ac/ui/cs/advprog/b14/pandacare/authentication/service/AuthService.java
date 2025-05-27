@@ -63,7 +63,7 @@ public class AuthService implements AuthenticationFacade {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            String tokenString = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId());
+            String tokenString = jwtUtil.generateToken(user.getEmail(), user.getRole());
             Date expiryDate = jwtUtil.getExpirationDateFromToken(tokenString);
             tokenRepository.deleteExpiredTokens(new Date());
 
@@ -258,7 +258,7 @@ public class AuthService implements AuthenticationFacade {
 
             tokenRepository.deleteByToken(oldToken);
 
-            String newTokenString = jwtUtil.generateToken(email, user.getRole(), user.getId());
+            String newTokenString = jwtUtil.generateToken(email, user.getRole());
             Date expiryDate = jwtUtil.getExpirationDateFromToken(newTokenString);
 
             Token newToken = new Token(newTokenString, expiryDate);
