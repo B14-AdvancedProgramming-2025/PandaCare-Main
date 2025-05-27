@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/ratings").hasRole("PACILIAN")
                         .requestMatchers("/api/ratings/**").authenticated()
 
+                        .requestMatchers("/api/profile/**").permitAll()
+
                         .requestMatchers("/ws/**").authenticated()
                         .requestMatchers("/app/**").authenticated()
                         .requestMatchers("/topic/**").authenticated()
