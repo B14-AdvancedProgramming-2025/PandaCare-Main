@@ -15,6 +15,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Allow all origins or specify particular ones
+        config.addAllowedOriginPattern("*");
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://159.89.209.87:3003");
         config.addAllowedOrigin("https://159.89.209.87:3003");
