@@ -1,6 +1,8 @@
 package id.ac.ui.cs.advprog.b14.pandacare.rating.controller;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.DoctorRatingSummaryDto;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingRequest;
 import id.ac.ui.cs.advprog.b14.pandacare.rating.dto.RatingResponse;
@@ -21,10 +23,12 @@ import java.util.stream.Collectors;
 public class DoctorRatingController {
 
     private final DoctorRatingService doctorRatingService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public DoctorRatingController(DoctorRatingService doctorRatingService) {
+    public DoctorRatingController(DoctorRatingService doctorRatingService, UserRepository userRepository) {
         this.doctorRatingService = doctorRatingService;
+        this.userRepository = userRepository;
     }
 
     // CREATE
@@ -105,9 +109,25 @@ public class DoctorRatingController {
         }
     }
 
-    // GET BY DOCTOR (Caregiver)
-    @GetMapping("/doctor/{doctorId}")
-    public CompletableFuture<ResponseEntity<ApiResponse<List<RatingResponse>>>> getByDoctor(@PathVariable String doctorId) {
+    @GetMapping("/doctor/{doctorIdOrEmail}")
+    public CompletableFuture<ResponseEntity<ApiResponse<List<RatingResponse>>>> getByDoctor(@PathVariable String doctorIdOrEmail) {
+        String doctorId;
+
+        // Check if the input is an email
+        if (doctorIdOrEmail.contains("@")) {
+            try {
+                User user = userRepository.findByEmail(doctorIdOrEmail);
+                doctorId = user.getId();
+            } catch (IllegalArgumentException e) {
+                return CompletableFuture.completedFuture(
+                        ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(new ApiResponse<>(false, e.getMessage(), null))
+                );
+            }
+        } else {
+            doctorId = doctorIdOrEmail;
+        }
+
         return doctorRatingService.findByDoctorId(doctorId)
                 .thenApply(ratings -> ratings.stream()
                         .map(RatingResponse::new)
@@ -139,6 +159,20 @@ public class DoctorRatingController {
         List<DoctorRatingSummaryDto> summaries =
                 doctorRatingService.getAllDoctorsAverageRatings();
         return ResponseEntity.ok(summaries);
+    }
+
+    @GetMapping("/id/{email}")
+    public ResponseEntity<?> getIdByEmail(@PathVariable String email) {
+        try {
+            User user = userRepository.findByEmail(email);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(true, "User ID retrieved successfully", user.getId())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse<>(false, e.getMessage(), null)
+            );
+        }
     }
 
 

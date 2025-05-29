@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Caregiver;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.Pacilian;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.model.Consultation;
 import id.ac.ui.cs.advprog.b14.pandacare.scheduling.service.SchedulingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ public class SchedulingControllerTest {
 
     @Mock
     private SchedulingService asyncSchedulingService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private SchedulingController controller;

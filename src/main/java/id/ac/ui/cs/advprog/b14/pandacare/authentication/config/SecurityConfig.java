@@ -45,12 +45,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/ratings").hasRole("PACILIAN")
                         .requestMatchers("/api/ratings/**").authenticated()
 
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/app/**").permitAll()
+                        .requestMatchers("/topic/**").permitAll()
+                        .requestMatchers("/queue/**").permitAll()
                         .requestMatchers("/api/profile/**").permitAll()
-
-                        .requestMatchers("/ws/**").authenticated()
-                        .requestMatchers("/app/**").authenticated()
-                        .requestMatchers("/topic/**").authenticated()
-                        .requestMatchers("/queue/**").authenticated()
 
                         .requestMatchers("/actuator/**").permitAll()
                         

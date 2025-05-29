@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.*;
 
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.User;
 import id.ac.ui.cs.advprog.b14.pandacare.authentication.model.UserType;
+import id.ac.ui.cs.advprog.b14.pandacare.authentication.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -23,10 +25,13 @@ public class SchedulingController {
 
     private static final Logger log = LoggerFactory.getLogger(SchedulingController.class);
     private final SchedulingService asyncSchedulingService;
+    private final UserRepository userRepository;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     
-    public SchedulingController(SchedulingService asyncSchedulingService) { 
+    public SchedulingController(SchedulingService asyncSchedulingService,
+                            UserRepository userRepository) { 
         this.asyncSchedulingService = asyncSchedulingService;
+        this.userRepository = userRepository;
     }
     
     @GetMapping("/caregiver/consultations")
@@ -536,6 +541,34 @@ public class SchedulingController {
             response.put("success", false);
             response.put("message", "Invalid request format: " + e.getMessage());
             return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(response));
+        }
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable String userId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Optional<User> userOpt = userRepository.findById(userId);
+            
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                response.put("success", true);
+                response.put("id", user.getId());
+                response.put("name", user.getName());
+                response.put("email", user.getEmail());
+                response.put("type", user.getType());
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "User not found");
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching user by ID: {}", userId, e);
+            response.put("success", false);
+            response.put("message", "Error fetching user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

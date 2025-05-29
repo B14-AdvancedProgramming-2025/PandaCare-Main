@@ -41,7 +41,7 @@ public class AccountController {
 //        System.out.println("User found: " + userFromService.getId() + ", Email: " + userFromService.getEmail());
 
         UserProfileDTO userProfile = accountService.getProfileById(userFromService.getId());
-        System.out.println("User Profile: " + userProfile.getId());
+        System.out.println("[AccountController /me] User Profile Retrieved: ID=" + userProfile.getId() + ", Email=" + userProfile.getEmail() + ", Name=" + userProfile.getName() + ", Type=" + userProfile.getType() + "med history=" + userProfile.getMedicalHistory()); // MODIFIED: More detailed logging
         ApiResponse<UserProfileDTO> response = new ApiResponse<>(200, "Current user profile retrieved successfully", userProfile);
 //        System.out.println("Response: " + response);
         return ResponseEntity.ok(response);

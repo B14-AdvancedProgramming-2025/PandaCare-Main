@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Entity
-@Table(name = "caregiver_working_schedule")
+@Table(name = "working_schedules")
 @Getter @Setter @NoArgsConstructor
 public class WorkingSchedule {
     
