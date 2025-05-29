@@ -16,6 +16,8 @@ public class CorsConfig {
 
         // Allow all origins or specify particular ones
         config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://159.89.209.87:3003");
+        config.addAllowedOrigin("https://159.89.209.87:3003");
         // Allow credentials
         config.setAllowCredentials(true);
         // Allow all headers
