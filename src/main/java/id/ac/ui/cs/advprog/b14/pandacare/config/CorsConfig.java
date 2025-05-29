@@ -21,6 +21,7 @@ public class CorsConfig {
         config.addAllowedOrigin("https://159.89.209.87:3003");
         config.addAllowedOrigin("https://pandacare.netlify.app");
         config.addAllowedOrigin("http://pandacare.netlify.app");
+        config.addAllowedOrigin("https://pandacare.abhipraya.dev");
         // Allow credentials
         config.setAllowCredentials(true);
         // Allow all headers
