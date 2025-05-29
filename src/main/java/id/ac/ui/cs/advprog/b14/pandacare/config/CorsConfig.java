@@ -18,6 +18,8 @@ public class CorsConfig {
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://159.89.209.87:3003");
         config.addAllowedOrigin("https://159.89.209.87:3003");
+        config.addAllowedOrigin("https://pandacare.netlify.app");
+        config.addAllowedOrigin("http://pandacare.netlify.app");
         // Allow credentials
         config.setAllowCredentials(true);
         // Allow all headers
