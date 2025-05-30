@@ -8,8 +8,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsUtils;
 
 @Configuration
 @EnableWebSecurity
@@ -27,28 +25,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/register/**").permitAll()
-                        .requestMatchers("/api/pacilian/**").hasRole("PACILIAN")
-                        .requestMatchers("/api/caregiver/**").hasRole("CAREGIVER")
-                        
-                        .requestMatchers("/api/scheduling/**").permitAll()
-
-                        .requestMatchers("/api/ratings/doctors").permitAll()
-                        .requestMatchers("/api/ratings/doctor/**").permitAll()
-                        .requestMatchers("/api/ratings").hasRole("PACILIAN")
-                        .requestMatchers("/api/ratings/**").authenticated()
-
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/app/**").permitAll()
-                        .requestMatchers("/topic/**").permitAll()
-                        .requestMatchers("/queue/**").permitAll()
-
-                        .requestMatchers("/actuator/**").permitAll()
-                        
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }

@@ -22,35 +22,23 @@ public class SimpleCorsFilter implements Filter {
 
         String origin = request.getHeader("Origin");
         
-        // Define allowed origins
-        String[] allowedOrigins = {
-            "http://localhost:3000",
-            "https://pandacare.netlify.app",
-            "http://pandacare.netlify.app",
-            "http://159.89.209.87:3003",
-            "https://159.89.209.87:3003",
-            "https://pandacare.abhipraya.dev"
-        };
-
-        // Check if origin is allowed
-        boolean isAllowed = false;
-        if (origin != null) {
-            for (String allowedOrigin : allowedOrigins) {
-                if (allowedOrigin.equals(origin)) {
-                    isAllowed = true;
-                    break;
-                }
-            }
-        }
-
-        // Set CORS headers only if origin is allowed
-        if (isAllowed) {
+        // Clear any existing CORS headers first
+        response.setHeader("Access-Control-Allow-Origin", "");
+        response.setHeader("Access-Control-Allow-Credentials", "");
+        response.setHeader("Access-Control-Allow-Methods", "");
+        response.setHeader("Access-Control-Allow-Headers", "");
+        response.setHeader("Access-Control-Max-Age", "");
+        
+        // Set completely permissive CORS headers
+        if (origin != null && !origin.isEmpty()) {
             response.setHeader("Access-Control-Allow-Origin", origin);
-            response.setHeader("Access-Control-Allow-Credentials", "true");
-            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With");
-            response.setHeader("Access-Control-Max-Age", "3600");
+        } else {
+            response.setHeader("Access-Control-Allow-Origin", "*");
         }
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+        response.setHeader("Access-Control-Allow-Methods", "*");
+        response.setHeader("Access-Control-Allow-Headers", "*");
+        response.setHeader("Access-Control-Max-Age", "3600");
 
         // Handle preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
