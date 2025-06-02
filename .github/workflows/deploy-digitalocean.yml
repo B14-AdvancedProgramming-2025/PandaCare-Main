@@ -68,9 +68,24 @@ jobs:
             # Load Docker image
             docker load < pandacare.tar
 
-            docker-compose down || true
-
+            # Start infrastructure containers (Grafana, Prometheus, etc.)
             docker-compose up -d --remove-orphans
+
+            # Stop existing container if running
+            docker stop pandacare-container || true
+            docker rm pandacare-container || true
+
+            # Run new container with environment variablesAdd commentMore actions
+            docker run -d \
+              --name pandacare-container \
+              --restart unless-stopped \
+              --network pandacare-be_monitoring \
+              -p 8090:8080 \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              pandacare:latest
 
             # Clean up
             rm pandacare.tar
