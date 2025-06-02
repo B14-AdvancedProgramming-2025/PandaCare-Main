@@ -41,6 +41,18 @@ jobs:
       - name: Compress Docker image
         run: gzip -f pandacare.tar
 
+      - name: "Debug: List files in workspace"
+        run: ls -lah
+
+      - name: "Debug: Show files and contents"
+        run: |
+          echo "Workspace files:"
+          ls -lah
+          echo "Contents of docker-compose.yml:"
+          cat docker-compose.yml || echo "Missing"
+          echo "Contents of pandacare.tar.gz:"
+          file pandacare.tar.gz || echo "Missing"
+
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/scp-action@v0.1.4
         with:
