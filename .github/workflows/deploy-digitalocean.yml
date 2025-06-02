@@ -47,7 +47,7 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
-          source: "pandacare.tar.gz,docker-compose.yml"
+          source: "pandacare.tar.gz,docker-compose.yml,prometheus.yml"
           target: '/home/${{ secrets.DO_USERNAME }}/pandacare-be'
           timeout: 120s
 
