@@ -48,8 +48,8 @@ public class DoctorRatingService {
         ConcreteDoctorRating decorated = new ConcreteDoctorRating(base);
         decorated.setValue(value);
         decorated.setComment(comment);
-        // 3) persist **entity base**, bukan decorator
-        return doctorRatingRepository.save(base);
+        // 3) persist **entity decorated**, bukan base langsung
+        return doctorRatingRepository.save(decorated);
     }
 
     // READ by ID
